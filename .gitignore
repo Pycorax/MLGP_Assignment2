@@ -2,3 +2,4 @@
 *.sdf
 MovementServer/Debug/
 Debug/
+*.opendb

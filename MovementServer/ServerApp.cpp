@@ -77,6 +77,7 @@ void ServerApp::Loop()
 			break;
 
 		case ID_COLLIDE:
+		case ID_INJURED:
 			{
 				bs.ResetReadPointer();
 				rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE, 0, packet->systemAddress, true);

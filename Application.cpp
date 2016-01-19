@@ -11,11 +11,8 @@
 #include <iostream>
 #include <fstream>
 
-
-
 // Lab 13 Task 9a : Uncomment the macro NETWORKMISSILE
 #define NETWORKMISSILE
-
 
 float GetAbsoluteMag( float num )
 {
@@ -143,8 +140,8 @@ bool Application::Update()
 		if (Ship* collision = (mymissile)->Update(ships_, timedelta))
 		{
 			// Have collision
-			delete mymissile;
 			collision->Injure(mymissile->GetDamage());
+			delete mymissile;			
 			mymissile = nullptr;
 
 			// Inform others that this ship was injured
@@ -293,7 +290,7 @@ bool Application::ControlUpdate(double dt)
 		{
 			keydown_enter = false;
 		}
-	}
+	}	
 
 	return false;
 }
@@ -428,33 +425,33 @@ bool Application::HandlePackets(Packet * packet)
 		break;
 
 		case ID_COLLIDE:
-		{
-			unsigned int shipid;
-			float x, y;
-			bs.Read(shipid);
-
-			if (shipid == ships_.at(0)->GetID())
 			{
-				std::cout << "collided with someone!" << std::endl;
+				unsigned int shipid;
+				float x, y;
+				bs.Read(shipid);
 
-				ships_.at(0)->RecvObject(&bs, ID_COLLIDE);
+				if (shipid == ships_.at(0)->GetID())
+				{
+					std::cout << "collided with someone!" << std::endl;
+
+					ships_.at(0)->RecvObject(&bs, ID_COLLIDE);
+				}
 			}
-		}
-		break;
+			break;
 
 		case ID_INJURED:
-
-			unsigned int shipid;
-			float x, y;
-			bs.Read(shipid);
-
-			if (shipid == ships_.at(0)->GetID())
 			{
-				std::cout << "hit by someone!" << std::endl;
+				unsigned int shipid;
+				float x, y;
+				bs.Read(shipid);
 
-				ships_.at(0)->RecvObject(&bs, ID_INJURED);
+				if (shipid == ships_.at(0)->GetID())
+				{
+					std::cout << "hit by someone!" << std::endl;
+
+					ships_.at(0)->RecvObject(&bs, ID_INJURED);
+				}
 			}
-
 			break;
 
 		case ID_NEWMISSILE:
@@ -499,8 +496,10 @@ bool Application::HandlePackets(Packet * packet)
 		break;
 
 		default:
+		{
 			std::cout << "Unhandled Message Identifier: " << (int)msgid << std::endl;
-
+		}
+		break;
 		}
 		rakpeer_->DeallocatePacket(packet);
 	}
