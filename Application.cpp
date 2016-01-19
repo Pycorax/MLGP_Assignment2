@@ -82,6 +82,18 @@ bool Application::Init()
 	hge_->System_SetState(HGE_LOGFILE, "movement.log");
 	hge_->System_SetState(HGE_DONTSUSPEND, true);
 
+	// Load Textures
+	HGE* hge = hgeCreate(HGE_VERSION);
+	textures_[TT_BG] = hge->Texture_Load("background.png");
+	textures_[TT_BOOM] = hge->Texture_Load("boom.png");
+	hge->Release();
+
+	// Load Sprites
+	sprites_[ST_BG].reset(new hgeSprite(textures_[TT_BG], 0, 0, 800, 600));
+	sprites_[ST_BG]->SetHotSpot(400, 300);
+	sprites_[ST_BOOM].reset(new hgeSprite(textures_[TT_BOOM], 0, 0, 40, 40));
+	sprites_[ST_BOOM]->SetHotSpot(20, 20);
+
 	// Attempt to start up HGE
 	if(hge_->System_Initiate()) 
 	{
@@ -97,12 +109,6 @@ bool Application::Init()
 			return rakpeer_->Connect(serverip.c_str(), 1691, 0, 0);
 		}
 	}
-
-	// Load Textures
-	textures_[TT_BG] = hge_->Texture_Load("background.png");
-
-	// Load Sprites
-	sprites_[ST_BG].reset(new hgeSprite(textures_[TT_BG], 0, 0, 800, 600));
 
 	return false;
 }
@@ -127,7 +133,6 @@ bool Application::Update()
 			return lobbyUpdate();
 		case AS_GAME:
 			return gameUpdate();
-
 	}
 }
 
@@ -527,7 +532,7 @@ bool Application::gameUpdate()
 
 void Application::lobbyRender()
 {
-	sprites_[ST_BG]->RenderEx(0, 0, 0);
+	sprites_[ST_BG]->RenderEx(400, 300, 0);
 
 	font_->printf(150, 150, HGETEXT_LEFT, "%s",
 		"Test text");

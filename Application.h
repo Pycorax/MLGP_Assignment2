@@ -34,12 +34,14 @@ class Application
 	enum TEXTURE_TYPE
 	{
 		TT_BG,
+		TT_BOOM,
 		TT_TOTAL
 	};
 
 	enum SPRITE_TYPE
 	{
 		ST_BG,
+		ST_BOOM,
 		ST_TOTAL
 	};
 
