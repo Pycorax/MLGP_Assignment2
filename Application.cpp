@@ -10,6 +10,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <hgefont.h>
 
 // Lab 13 Task 9a : Uncomment the macro NETWORKMISSILE
 #define NETWORKMISSILE
@@ -30,14 +31,17 @@ float GetAbsoluteMag( float num )
 * Creates an instance of the graphics engine and network engine
 */
 
-Application::Application() 
-:	hge_(hgeCreate(HGE_VERSION))
-,	rakpeer_(RakNetworkFactory::GetRakPeerInterface())
-,	timer_( 0 )
-// Lab 13 Task 2 : add new initializations
-,	mymissile(nullptr)
-,	keydown_enter(false)
+Application::Application()
+	: hge_(hgeCreate(HGE_VERSION))
+	, appstate(AS_LOBBY)
+	, rakpeer_(RakNetworkFactory::GetRakPeerInterface())
+	, timer_(0)
+	// Lab 13 Task 2 : add new initializations
+	, mymissile(nullptr)
+	, keydown_enter(false)
 {
+	font_.reset(new hgeFont("font1.fnt"));
+	font_->SetScale(0.5);
 }
 
 /**
@@ -74,7 +78,7 @@ bool Application::Init()
 	hge_->System_SetState(HGE_FRAMEFUNC, Application::Loop);
 	hge_->System_SetState(HGE_WINDOWED, true);
 	hge_->System_SetState(HGE_USESOUND, false);
-	hge_->System_SetState(HGE_TITLE, "Movement");
+	hge_->System_SetState(HGE_TITLE, "Multiplayer Game Programming Assignment 2");
 	hge_->System_SetState(HGE_LOGFILE, "movement.log");
 	hge_->System_SetState(HGE_DONTSUSPEND, true);
 
@@ -94,6 +98,12 @@ bool Application::Init()
 		}
 	}
 
+	// Load Textures
+	textures_[TT_BG] = hge_->Texture_Load("background.png");
+
+	// Load Sprites
+	sprites_[ST_BG].reset(new hgeSprite(textures_[TT_BG], 0, 0, 800, 600));
+
 	return false;
 }
 
@@ -111,81 +121,14 @@ bool Application::Init()
 */
 bool Application::Update()
 {
-	// Get the delta time
-	float timedelta = hge_->Timer_GetDelta();
-
-	// Reset my angular velocity
-	ships_.at(0)->SetAngularVelocity( 0.0f );
-
-	// Get Controls
-	if (ControlUpdate(timedelta))
+	switch (appstate)
 	{
-		// True is returned to end the game
-		return true;
+		case AS_LOBBY:
+			return lobbyUpdate();
+		case AS_GAME:
+			return gameUpdate();
+
 	}
-
-	// Update all the ships
-	for (ShipList::iterator ship = ships_.begin(); ship != ships_.end(); ship++)
-	{
-		(*ship)->Update(timedelta);
-
-		//collisions
-		if( (*ship) == ships_.at(0) )
-			checkCollisions( (*ship) );
-	}
-
-	// Update my missile
-	if (mymissile)
-	{
-		if (Ship* collision = (mymissile)->Update(ships_, timedelta))
-		{
-			// Have collision
-			collision->Injure(mymissile->GetDamage());
-			delete mymissile;			
-			mymissile = nullptr;
-
-			// Inform others that this ship was injured
-			collision->SendObject(rakpeer_, ID_INJURED);
-
-			std::cout << "COLLISION!" << std::endl;
-		}
-	}
-
-	// Update network missiles
-	for (auto missile = missiles_.begin(); missile != missiles_.end(); ++missile)
-	{
-		if (Ship* collision = (*missile)->Update(ships_, timedelta))
-		{
-			// Have collision
-			delete *missile;
-			collision->Injure((*missile)->GetDamage());
-			missiles_.erase(missile);
-
-			std::cout << "COLLISION!" << std::endl;
-			break;
-		}
-	}
-
-	// Handle the Packets that are received
-	HandlePackets(rakpeer_->Receive());
-
-	/*
-	 * Packets to Send
-	 */
-	if (RakNet::GetTime() - timer_ > NETWORK_UPDATE_DELTA)
-	{
-		timer_ = RakNet::GetTime();
-
-		ships_.at(0)->SendObject(rakpeer_, ID_MOVEMENT);
-
-		// Lab 13 Task 11 : send missile update 
-		if (mymissile)
-		{
-			mymissile->SendObject(rakpeer_, ID_UPDATEMISSILE);
-		}
-	}
-
-	return false;
 }
 
 
@@ -199,24 +142,15 @@ void Application::Render()
 	hge_->Gfx_BeginScene();
 	hge_->Gfx_Clear(0);
 
-	ShipList::iterator itr;
-	for (itr = ships_.begin(); itr != ships_.end(); itr++)
+	switch (appstate)
 	{
-		(*itr)->Render();
+		case AS_LOBBY:
+			lobbyRender();
+			break;
+		case AS_GAME:
+			gameRender();
+			break;
 	}
-
-	// Lab 13 Task 6 : Render the missile
-	if (mymissile)
-	{
-		mymissile->Render();
-	}
-
-	// Lab 13 Task 12 : Render network missiles
-	for (auto missile : missiles_)
-	{
-		missile->Render();
-	}
-
 
 	hge_->Gfx_EndScene();
 }
@@ -502,6 +436,121 @@ bool Application::HandlePackets(Packet * packet)
 		break;
 		}
 		rakpeer_->DeallocatePacket(packet);
+	}
+}
+
+bool Application::lobbyUpdate()
+{
+
+
+	return false;
+}
+
+bool Application::gameUpdate()
+{
+	// Get the delta time
+	float timedelta = hge_->Timer_GetDelta();
+
+	// Reset my angular velocity
+	ships_.at(0)->SetAngularVelocity(0.0f);
+
+	// Get Controls
+	if (ControlUpdate(timedelta))
+	{
+		// True is returned to end the game
+		return true;
+	}
+
+	// Update all the ships
+	for (ShipList::iterator ship = ships_.begin(); ship != ships_.end(); ship++)
+	{
+		(*ship)->Update(timedelta);
+
+		//collisions
+		if ((*ship) == ships_.at(0))
+			checkCollisions((*ship));
+	}
+
+	// Update my missile
+	if (mymissile)
+	{
+		if (Ship* collision = (mymissile)->Update(ships_, timedelta))
+		{
+			// Have collision
+			collision->Injure(mymissile->GetDamage());
+			delete mymissile;
+			mymissile = nullptr;
+
+			// Inform others that this ship was injured
+			collision->SendObject(rakpeer_, ID_INJURED);
+
+			std::cout << "COLLISION!" << std::endl;
+		}
+	}
+
+	// Update network missiles
+	for (auto missile = missiles_.begin(); missile != missiles_.end(); ++missile)
+	{
+		if (Ship* collision = (*missile)->Update(ships_, timedelta))
+		{
+			// Have collision
+			delete *missile;
+			collision->Injure((*missile)->GetDamage());
+			missiles_.erase(missile);
+
+			std::cout << "COLLISION!" << std::endl;
+			break;
+		}
+	}
+
+	// Handle the Packets that are received
+	HandlePackets(rakpeer_->Receive());
+
+	/*
+	* Packets to Send
+	*/
+	if (RakNet::GetTime() - timer_ > NETWORK_UPDATE_DELTA)
+	{
+		timer_ = RakNet::GetTime();
+
+		ships_.at(0)->SendObject(rakpeer_, ID_MOVEMENT);
+
+		// Lab 13 Task 11 : send missile update 
+		if (mymissile)
+		{
+			mymissile->SendObject(rakpeer_, ID_UPDATEMISSILE);
+		}
+	}
+
+	return false;
+}
+
+void Application::lobbyRender()
+{
+	sprites_[ST_BG]->RenderEx(0, 0, 0);
+
+	font_->printf(150, 150, HGETEXT_LEFT, "%s",
+		"Test text");
+}
+
+void Application::gameRender()
+{
+	ShipList::iterator itr;
+	for (itr = ships_.begin(); itr != ships_.end(); itr++)
+	{
+		(*itr)->Render();
+	}
+
+	// Lab 13 Task 6 : Render the missile
+	if (mymissile)
+	{
+		mymissile->Render();
+	}
+
+	// Lab 13 Task 12 : Render network missiles
+	for (auto missile : missiles_)
+	{
+		missile->Render();
 	}
 }
 

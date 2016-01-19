@@ -6,6 +6,8 @@
 #include <vector>
 
 class HGE;
+class hgeFont;
+class hgeSprite;
 class RakPeerInterface;
 
 //! The default angular velocity of the ship when it is in motion
@@ -22,10 +24,33 @@ static const float DEFAULT_ACCELERATION = 50.0f;
 
 class Application
 {
+	enum APP_STATE
+	{
+		AS_LOBBY,
+		AS_GAME,
+		AS_TOTAL
+	};
+
+	enum TEXTURE_TYPE
+	{
+		TT_BG,
+		TT_TOTAL
+	};
+
+	enum SPRITE_TYPE
+	{
+		ST_BG,
+		ST_TOTAL
+	};
+
 	/*
 	 * Application
 	 */
 	HGE* hge_; //!< Instance of the internal graphics engine
+	std::auto_ptr<hgeFont> font_;
+	HTEXTURE textures_[TT_TOTAL];
+	std::auto_ptr<hgeSprite> sprites_[ST_TOTAL];
+	APP_STATE appstate;
 	
 	/*
 	 * Network
@@ -56,6 +81,14 @@ class Application
 	void Shutdown();
 	bool ControlUpdate(double dt);
 	bool HandlePackets(Packet* packet);
+
+	// -- State Updates
+	bool lobbyUpdate();
+	bool gameUpdate();
+
+	// -- State Renders
+	void lobbyRender();
+	void gameRender();
 
 	// Others
 	bool checkCollisions(Ship* ship);
