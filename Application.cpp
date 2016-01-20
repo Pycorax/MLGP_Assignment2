@@ -39,9 +39,8 @@ Application::Application()
 	// Lab 13 Task 2 : add new initializations
 	, mymissile(nullptr)
 	, keydown_enter(false)
+	, font_(nullptr)
 {
-	font_.reset(new hgeFont("font1.fnt"));
-	font_->SetScale(0.5);
 }
 
 /**
@@ -79,27 +78,35 @@ bool Application::Init()
 	hge_->System_SetState(HGE_WINDOWED, true);
 	hge_->System_SetState(HGE_USESOUND, false);
 	hge_->System_SetState(HGE_TITLE, "Multiplayer Game Programming Assignment 2");
+	hge_->System_SetState(HGE_SCREENWIDTH, 800);
+	hge_->System_SetState(HGE_SCREENHEIGHT, 600);
 	hge_->System_SetState(HGE_LOGFILE, "movement.log");
 	hge_->System_SetState(HGE_DONTSUSPEND, true);
-
-	// Load Textures
-	HGE* hge = hgeCreate(HGE_VERSION);
-	textures_[TT_BG] = hge->Texture_Load("background.png");
-	textures_[TT_BOOM] = hge->Texture_Load("boom.png");
-	hge->Release();
-
-	// Load Sprites
-	sprites_[ST_BG].reset(new hgeSprite(textures_[TT_BG], 0, 0, 800, 600));
-	sprites_[ST_BG]->SetHotSpot(400, 300);
-	sprites_[ST_BOOM].reset(new hgeSprite(textures_[TT_BOOM], 0, 0, 40, 40));
-	sprites_[ST_BOOM]->SetHotSpot(20, 20);
 
 	// Attempt to start up HGE
 	if(hge_->System_Initiate()) 
 	{
+		// Get the screen resolution
+		float screenwidth = static_cast<float>(hge_->System_GetState(HGE_SCREENWIDTH));
+		float screenheight = static_cast<float>(hge_->System_GetState(HGE_SCREENHEIGHT));
+
 		// Initialize ships
 		ships_.push_back(new Ship(rand()%4+1, rand()%500+100, rand()%400+100));
 		ships_.at(0)->SetName("My Ship");
+
+		// Load Textures
+		textures_[TT_BG] = hge_->Texture_Load("background.png");
+		textures_[TT_BOOM] = hge_->Texture_Load("boom.png");
+
+		// Load Sprites
+		sprites_[ST_BG].reset(new hgeSprite(textures_[TT_BG], 0, 0, screenwidth, screenheight));
+		sprites_[ST_BG]->SetHotSpot(screenwidth * 0.5f, screenheight * 0.5f);
+		sprites_[ST_BOOM].reset(new hgeSprite(textures_[TT_BOOM], 0, 0, 40, 40));
+		sprites_[ST_BOOM]->SetHotSpot(20, 20);
+
+		// Load Fonts
+		font_.reset(new hgeFont("font1.fnt"));
+		font_->SetScale(0.5);
 
 		// Attempt to start up RakNet
 		if (rakpeer_->Startup(1,30,&SocketDescriptor(), 1))
@@ -184,6 +191,16 @@ bool Application::Loop()
 
 void Application::Shutdown()
 {
+	for (size_t i = 0; i < TT_TOTAL; ++i)
+	{
+		hge_->Texture_Free(textures_[i]);
+	}
+
+	for (size_t i = 0; i < ST_TOTAL; ++i)
+	{
+		sprites_[i].release();
+	}
+
 	hge_->System_Shutdown();
 	hge_->Release();
 }
@@ -532,10 +549,16 @@ bool Application::gameUpdate()
 
 void Application::lobbyRender()
 {
-	sprites_[ST_BG]->RenderEx(400, 300, 0);
+	float screenwidth = static_cast<float>(hge_->System_GetState(HGE_SCREENWIDTH));
+	float screenheight = static_cast<float>(hge_->System_GetState(HGE_SCREENHEIGHT));
 
-	font_->printf(150, 150, HGETEXT_LEFT, "%s",
-		"Test text");
+	// Renders the BG
+	sprites_[ST_BG]->RenderEx(screenwidth * 0.5f, screenheight * 0.5f, 0);
+
+	// Renders the Title
+	font_->SetScale(2.5f);
+	font_->printf(screenwidth * 0.5f, screenheight * 0.1f, HGETEXT_CENTER, "%s",
+		"Game Lobby");
 }
 
 void Application::gameRender()
