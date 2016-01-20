@@ -39,7 +39,6 @@ Application::Application()
 	// Lab 13 Task 2 : add new initializations
 	, mymissile(nullptr)
 	, keydown_enter(false)
-	, font_(nullptr)
 {
 }
 
