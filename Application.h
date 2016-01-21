@@ -4,6 +4,7 @@
 #include "ship.h"
 #include "missile.h"
 #include <vector>
+#include "Button.h"
 
 class HGE;
 class hgeFont;
@@ -45,6 +46,12 @@ class Application
 		ST_TOTAL
 	};
 
+	enum BUTTON_TYPE
+	{
+		BT_START,
+		BT_TOTAL
+	};
+
 	/*
 	 * Application
 	 */
@@ -76,6 +83,9 @@ class Application
 	bool keydown_enter;
 	typedef std::vector<Missile*> MissileList;
 	MissileList missiles_;
+
+	// Buttons
+	Button buttons[BT_TOTAL];
 
 	// App Lifetime
 	bool Init();

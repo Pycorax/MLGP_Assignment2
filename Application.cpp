@@ -107,6 +107,9 @@ bool Application::Init()
 		font_.reset(new hgeFont("font1.fnt"));
 		font_->SetScale(0.5);
 
+		// Set up the Buttons
+		buttons[BT_START].Init(sprites_[ST_BOOM].get(), font_.get(), 30, 30, 60, 30, "Test");
+
 		// Attempt to start up RakNet
 		if (rakpeer_->Startup(1,30,&SocketDescriptor(), 1))
 		{
@@ -462,7 +465,18 @@ bool Application::HandlePackets(Packet * packet)
 
 bool Application::lobbyUpdate()
 {
+	float mouseXPos, mouseYPos;
+	hge_->Input_GetMousePos(&mouseXPos, &mouseYPos);
 
+	for (auto& button : buttons)
+	{
+		button.Update(mouseXPos, mouseYPos);
+	}
+
+	if (buttons[BT_START].GetState())
+	{
+		appstate = AS_GAME;
+	}
 
 	return false;
 }
@@ -558,6 +572,12 @@ void Application::lobbyRender()
 	font_->SetScale(2.5f);
 	font_->printf(screenwidth * 0.5f, screenheight * 0.1f, HGETEXT_CENTER, "%s",
 		"Game Lobby");
+
+	// Renders the Buttons
+	for (auto button : buttons)
+	{
+		button.Render();
+	}
 }
 
 void Application::gameRender()
