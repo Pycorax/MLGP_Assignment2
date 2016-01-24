@@ -3,6 +3,9 @@
 
 #include "RakNetTypes.h"
 #include <map>
+#include <string>
+
+using std::string;
 
 class RakPeerInterface;
 
@@ -14,6 +17,7 @@ struct GameObject
 		id = newid;
 	}
 
+	string name;
 	unsigned int id;
 	float x_;
 	float y_;
@@ -31,7 +35,7 @@ class ServerApp
 	
 	void SendWelcomePackage(SystemAddress& addr);
 	void SendDisconnectionNotification(SystemAddress& addr);
-	void ProcessInitialPosition( SystemAddress& addr, float x_, float y_, int type_);
+	void ProcessInitialPosition( SystemAddress& addr, string name, float x_, float y_, int type_);
 	void UpdatePosition( SystemAddress& addr, float x_, float y_ );
 
 public:

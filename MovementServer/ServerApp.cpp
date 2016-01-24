@@ -5,6 +5,7 @@
 #include "GetTime.h"
 #include "../MyMsgIDs.h"
 #include <iostream>
+#include "../ship.h"
 
 ServerApp::ServerApp() : 
 	rakpeer_(RakNetworkFactory::GetRakPeerInterface()),
@@ -54,11 +55,13 @@ void ServerApp::Loop()
 			{
 				float x_, y_;
 				int type_;
+				char name_[Ship::MAX_NAME_LENGTH];
 				std::cout << "ProcessInitialPosition" << std::endl;
+				bs.Read(name_);
 				bs.Read( x_ );
 				bs.Read( y_ );
 				bs.Read( type_ );
-				ProcessInitialPosition( packet->systemAddress, x_, y_, type_);
+				ProcessInitialPosition( packet->systemAddress, name_, x_, y_, type_);
 			}
 			break;
 
@@ -120,7 +123,8 @@ void ServerApp::SendWelcomePackage(SystemAddress& addr)
 
 	for (ClientMap::iterator itr = clients_.begin(); itr != clients_.end(); ++itr)
 	{
-		std::cout << "Ship " << itr->second.id << " pos" << itr->second.x_ << " " << itr->second.y_ << std::endl;
+		std::cout << "Ship " << itr->second.name << " (" << itr->second.id << ") pos" << itr->second.x_ << " " << itr->second.y_ << std::endl;
+		bs.Write( itr->second.name.c_str());
 		bs.Write( itr->second.id );
 		bs.Write( itr->second.x_ );
 		bs.Write( itr->second.y_ );
@@ -157,7 +161,7 @@ void ServerApp::SendDisconnectionNotification(SystemAddress& addr)
 
 }
 
-void ServerApp::ProcessInitialPosition( SystemAddress& addr, float x_, float y_, int type_)
+void ServerApp::ProcessInitialPosition( SystemAddress& addr, string name_, float x_, float y_, int type_)
 {
 	unsigned char msgid;
 	RakNet::BitStream bs;
@@ -165,6 +169,7 @@ void ServerApp::ProcessInitialPosition( SystemAddress& addr, float x_, float y_,
 	if (itr == clients_.end())
 		return;
 
+	itr->second.name = name_;
 	itr->second.x_ = x_;
 	itr->second.y_ = y_;
 	itr->second.type_ = type_;
@@ -174,6 +179,7 @@ void ServerApp::ProcessInitialPosition( SystemAddress& addr, float x_, float y_,
 
 	msgid = ID_NEWSHIP;
 	bs.Write(msgid);
+	bs.Write(itr->second.name.c_str());
 	bs.Write(itr->second.id);
 	bs.Write(itr->second.x_);
 	bs.Write(itr->second.y_);

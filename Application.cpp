@@ -62,13 +62,6 @@ Application::~Application() throw()
 
 bool Application::Init()
 {
-	std::ifstream inData;	
-	std::string serverip;
-
-	inData.open("serverip.txt");
-
-	inData >> serverip;
-
 	// Seed Random
 	srand( RakNet::GetTime() );
 
@@ -109,9 +102,10 @@ bool Application::Init()
 		// Attempt to start up RakNet
 		if (rakpeer_->Startup(1,30,&SocketDescriptor(), 1))
 		{
-			// Attempt to connect to the server
+			// Init RakNet settings
 			rakpeer_->SetOccasionalPing(true);
-			return rakpeer_->Connect(serverip.c_str(), 1691, 0, 0);
+
+			return true;
 		}
 	}
 
@@ -289,8 +283,8 @@ bool Application::HandlePackets(Packet * packet)
 			unsigned int shipcount, id;
 			float x_, y_;
 			int type_;
-			std::string temp;
 			char chartemp[5];
+			char nameArray[Ship::MAX_NAME_LENGTH];
 
 			bs.Read(id);
 			ships_.at(0)->setID(id);
@@ -298,15 +292,14 @@ bool Application::HandlePackets(Packet * packet)
 
 			for (unsigned int i = 0; i < shipcount; ++i)
 			{
+				bs.Read(nameArray);
 				bs.Read(id);
 				bs.Read(x_);
 				bs.Read(y_);
 				bs.Read(type_);
 				std::cout << "New Ship pos" << x_ << " " << y_ << std::endl;
 				Ship* ship = new Ship(type_, x_, y_);
-				temp = "Ship ";
-				temp += _itoa(id, chartemp, 10);
-				ship->SetName(temp.c_str());
+				ship->SetName(nameArray);
 				ship->setID(id);
 				ships_.push_back(ship);
 			}
@@ -481,8 +474,12 @@ bool Application::joinUpdate()
 		// Reset the input buffer
 		inputBuffer = "";
 
-		// Go to the next state
-		appstate = AS_LOBBY;
+
+		if (rakpeer_->Connect("127.0.0.1", 1691, 0, 0))
+		{
+			// Go to the next state
+			appstate = AS_LOBBY;
+		}
 	}
 	else if (hge_->Input_GetKeyState(HGEK_BACKSPACE) && timePassed > BACKSPACE_DELAY)
 	{
@@ -682,6 +679,7 @@ bool Application::SendInitialPosition()
 {
 	RakNet::BitStream bs;
 	unsigned char msgid = ID_INITIALPOS;
+	bs.Write(ships_.at(0)->GetName().c_str());
 	bs.Write(msgid);
 	bs.Write(ships_.at(0)->GetX());
 	bs.Write(ships_.at(0)->GetY());
