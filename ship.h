@@ -65,6 +65,7 @@ class Ship : public INetworkProcessable
 
 	unsigned int collidetimer;
 public:
+	static const int MAX_NAME_LENGTH = 15;
 
 	Ship(int type, float locx_, float locy_);
 	~Ship();

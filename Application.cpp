@@ -33,7 +33,7 @@ float GetAbsoluteMag( float num )
 
 Application::Application()
 	: hge_(hgeCreate(HGE_VERSION))
-	, appstate(AS_LOBBY)
+	, appstate(AS_JOIN)
 	, rakpeer_(RakNetworkFactory::GetRakPeerInterface())
 	, timer_(0)
 	// Lab 13 Task 2 : add new initializations
@@ -89,10 +89,6 @@ bool Application::Init()
 		float screenwidth = static_cast<float>(hge_->System_GetState(HGE_SCREENWIDTH));
 		float screenheight = static_cast<float>(hge_->System_GetState(HGE_SCREENHEIGHT));
 
-		// Initialize ships
-		ships_.push_back(new Ship(rand()%4+1, rand()%500+100, rand()%400+100));
-		ships_.at(0)->SetName("My Ship");
-
 		// Load Textures
 		textures_[TT_BG] = hge_->Texture_Load("background.png");
 		textures_[TT_BOOM] = hge_->Texture_Load("boom.png");
@@ -138,6 +134,8 @@ bool Application::Update()
 {
 	switch (appstate)
 	{
+		case AS_JOIN:
+			return joinUpdate();
 		case AS_LOBBY:
 			return lobbyUpdate();
 		case AS_GAME:
@@ -158,6 +156,9 @@ void Application::Render()
 
 	switch (appstate)
 	{
+		case AS_JOIN:
+			joinRender();
+			break;
 		case AS_LOBBY:
 			lobbyRender();
 			break;
@@ -463,6 +464,44 @@ bool Application::HandlePackets(Packet * packet)
 	}
 }
 
+bool Application::joinUpdate()
+{
+	static const double BACKSPACE_DELAY = 0.1f;
+	static double timePassed = 0.0f;
+
+	// Update the timer
+	timePassed += hge_->Timer_GetDelta();
+
+	if (hge_->Input_GetKeyState(HGEK_ENTER))
+	{
+		// Initialize ships
+		ships_.push_back(new Ship(rand() % 4 + 1, rand() % 500 + 100, rand() % 400 + 100));
+		ships_.at(0)->SetName(inputBuffer.c_str());
+
+		// Reset the input buffer
+		inputBuffer = "";
+
+		// Go to the next state
+		appstate = AS_LOBBY;
+	}
+	else if (hge_->Input_GetKeyState(HGEK_BACKSPACE) && timePassed > BACKSPACE_DELAY)
+	{
+		inputBuffer = inputBuffer.substr(0, inputBuffer.length() - 1);
+		timePassed = 0.0f;
+	}
+	else
+	{
+		char input = hge_->Input_GetKey();
+
+		if (input >= ' ' && input <= '~' && inputBuffer.length() < Ship::MAX_NAME_LENGTH)
+		{
+			inputBuffer += input;
+		}
+	}
+
+	return false;
+}
+
 bool Application::lobbyUpdate()
 {
 	float mouseXPos, mouseYPos;
@@ -560,6 +599,24 @@ bool Application::gameUpdate()
 	return false;
 }
 
+void Application::joinRender()
+{
+	float screenwidth = static_cast<float>(hge_->System_GetState(HGE_SCREENWIDTH));
+	float screenheight = static_cast<float>(hge_->System_GetState(HGE_SCREENHEIGHT));
+
+	// Renders the BG
+	sprites_[ST_BG]->RenderEx(screenwidth * 0.5f, screenheight * 0.5f, 0);
+
+	// Renders the Title
+	font_->SetScale(2.5f);
+	font_->printf(screenwidth * 0.5f, screenheight * 0.1f, HGETEXT_CENTER, "%s",
+		"Enter your name:");
+
+	// Show the user Input
+	font_->SetScale(1.5f);
+	font_->printf(screenwidth * 0.5f, screenheight * 0.2f, HGETEXT_CENTER, "%s", inputBuffer.c_str());
+}
+
 void Application::lobbyRender()
 {
 	float screenwidth = static_cast<float>(hge_->System_GetState(HGE_SCREENWIDTH));
@@ -584,7 +641,7 @@ void Application::lobbyRender()
 	font_->SetScale(1.0f);
 	for (auto ship : ships_)
 	{
-	//	font_->printf(screenwidth * 0.7f, screenheight * 0.1f, HGETEXT_CENTER, "%s", ship->GetName());
+		font_->printf(screenwidth * 0.7f, screenheight * 0.2f, HGETEXT_CENTER, "%s", ship->GetName().c_str());
 		shipNameYPos += 80.0f;
 	}
 }

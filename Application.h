@@ -27,6 +27,7 @@ class Application
 {
 	enum APP_STATE
 	{
+		AS_JOIN,
 		AS_LOBBY,
 		AS_GAME,
 		AS_TOTAL
@@ -69,7 +70,11 @@ class Application
 	const int TICK_RATE = 24;
 	const int NETWORK_UPDATE_DELTA = 1000 / TICK_RATE;
 	
-	// Lab 13 Task 1 : add variables for local missle
+	/*
+	 * Input
+	 */
+	string inputBuffer;
+
 
 	/*
 	 * Gameplay
@@ -95,10 +100,12 @@ class Application
 	bool HandlePackets(Packet* packet);
 
 	// -- State Updates
+	bool joinUpdate();
 	bool lobbyUpdate();
 	bool gameUpdate();
 
 	// -- State Renders
+	void joinRender();
 	void lobbyRender();
 	void gameRender();
 
