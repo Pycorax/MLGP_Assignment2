@@ -180,8 +180,8 @@ void ServerApp::ProcessInitialPosition( SystemAddress& addr, string name_, float
 
 	msgid = ID_NEWSHIP;
 	bs.Write(msgid);
-	bs.Write(itr->second.name.c_str());
 	bs.Write(itr->second.id);
+	bs.Write(itr->second.name.c_str());
 	bs.Write(itr->second.x_);
 	bs.Write(itr->second.y_);
 	bs.Write(itr->second.type_);

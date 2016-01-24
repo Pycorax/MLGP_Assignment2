@@ -322,17 +322,15 @@ bool Application::HandlePackets(Packet * packet)
 			{
 				float x_, y_;
 				int type_;
-				std::string temp;
-				char chartemp[5];
+				char name_[Ship::MAX_NAME_LENGTH];
 
+				bs.Read(name_);
 				bs.Read(x_);
 				bs.Read(y_);
 				bs.Read(type_);
 				std::cout << "New Ship pos" << x_ << " " << y_ << std::endl;
 				Ship* ship = new Ship(type_, x_, y_);
-				temp = "Ship ";
-				temp += _itoa(id, chartemp, 10);
-				ship->SetName(temp.c_str());
+				ship->SetName(name_);
 				ship->setID(id);
 				ships_.push_back(ship);
 			}
@@ -636,12 +634,12 @@ void Application::lobbyRender()
 	}
 
 	// Renders the Lobby
-	int shipNameYPos = screenheight * 0.2f;
+	int shipNameYPos = screenheight * 0.3f;
 	font_->SetScale(1.0f);
 	for (auto ship : ships_)
 	{
-		font_->printf(screenwidth * 0.7f, screenheight * 0.2f, HGETEXT_CENTER, "%s", ship->GetName().c_str());
-		shipNameYPos += 80.0f;
+		font_->printf(screenwidth * 0.7f, shipNameYPos, HGETEXT_LEFT, "%s", ship->GetName().c_str());
+		shipNameYPos += 30.0f;
 	}
 }
 
