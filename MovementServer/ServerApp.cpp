@@ -174,6 +174,7 @@ void ServerApp::ProcessInitialPosition( SystemAddress& addr, string name_, float
 	itr->second.y_ = y_;
 	itr->second.type_ = type_;
 	
+	std::cout << "Player " << itr->second.name << " connected." << std::endl;
 	std::cout << "Received pos" << itr->second.x_ << " " << itr->second.y_ << std::endl;
 	std::cout << "Received type" << itr->second.type_ << std::endl;
 

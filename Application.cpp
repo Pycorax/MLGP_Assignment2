@@ -514,6 +514,8 @@ bool Application::lobbyUpdate()
 		appstate = AS_GAME;
 	}
 
+	HandlePackets(rakpeer_->Receive());
+
 	return false;
 }
 
@@ -679,8 +681,8 @@ bool Application::SendInitialPosition()
 {
 	RakNet::BitStream bs;
 	unsigned char msgid = ID_INITIALPOS;
-	bs.Write(ships_.at(0)->GetName().c_str());
 	bs.Write(msgid);
+	bs.Write(ships_.at(0)->GetName().c_str());
 	bs.Write(ships_.at(0)->GetX());
 	bs.Write(ships_.at(0)->GetY());
 	bs.Write(ships_.at(0)->GetType());
