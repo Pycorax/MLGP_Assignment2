@@ -112,6 +112,8 @@ public:
 
 	int GetType() { return type_; }
 
+	std::string GetName() { return mytext_; }
+
 	bool CanCollide( unsigned int timer ) 
 	{
 		if( timer - collidetimer > 2000 )

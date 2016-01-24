@@ -1,5 +1,13 @@
 .vs/
 *.sdf
 MovementServer/Debug/
-Debug/
 *.opendb
+*.obj
+*.idb
+*.lib
+*.tlog
+*.log
+*.opensdf
+*.exe
+*.ilk
+*.pdb

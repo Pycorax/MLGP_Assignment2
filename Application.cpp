@@ -108,7 +108,7 @@ bool Application::Init()
 		font_->SetScale(0.5);
 
 		// Set up the Buttons
-		buttons[BT_START].Init(sprites_[ST_BOOM].get(), font_.get(), 30, 30, 60, 30, "Test");
+		//buttons[BT_START].Init(sprites_[ST_BOOM].get(), font_.get(), 30, 30, 60, 30, "Test");
 
 		// Attempt to start up RakNet
 		if (rakpeer_->Startup(1,30,&SocketDescriptor(), 1))
@@ -576,7 +576,16 @@ void Application::lobbyRender()
 	// Renders the Buttons
 	for (auto button : buttons)
 	{
-		button.Render();
+		//button.Render();
+	}
+
+	// Renders the Lobby
+	int shipNameYPos = screenheight * 0.2f;
+	font_->SetScale(1.0f);
+	for (auto ship : ships_)
+	{
+	//	font_->printf(screenwidth * 0.7f, screenheight * 0.1f, HGETEXT_CENTER, "%s", ship->GetName());
+		shipNameYPos += 80.0f;
 	}
 }
 
