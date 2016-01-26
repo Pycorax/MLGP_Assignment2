@@ -7,7 +7,20 @@
 #include <iostream>
 #include "../ship.h"
 
-void ServerApp::NotifyNewRoom()
+void ServerApp::NotifyServerFull(SystemAddress & addr)
+{
+	RakNet::BitStream bs;
+
+	// State the purpose of the message
+	bs.Write(static_cast<unsigned char>(ID_NEWROOM));
+
+	// Broadcast to everyone that this new room has been created
+	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, addr, false);
+
+	std::cout << "User attemped to join full server!" << std::endl;
+}
+
+void ServerApp::NotifyNewRoomCreated()
 {
 	RakNet::BitStream bs;
 
@@ -31,7 +44,7 @@ ServerApp::ServerApp() :
 	newID(0)
 {
 	rakpeer_->Startup(100, 30, &SocketDescriptor(1691, 0), 1);
-	rakpeer_->SetMaximumIncomingConnections(100);
+	rakpeer_->SetMaximumIncomingConnections(MAX_CONNECTIONS);
 	rakpeer_->SetOccasionalPing(true);
 	std::cout << "Server Started" << std::endl;
 }
@@ -62,7 +75,14 @@ void ServerApp::Loop()
 		switch (msgid)
 		{
 		case ID_NEW_INCOMING_CONNECTION:
-			SendWelcomePackage(packet->systemAddress);
+			if (clients_.size() < MAX_CONNECTIONS)
+			{
+				SendWelcomePackage(packet->systemAddress);
+			}
+			else
+			{
+				NotifyServerFull(packet->systemAddress);
+			}
 			break;
 
 		case ID_DISCONNECTION_NOTIFICATION:
@@ -94,7 +114,7 @@ void ServerApp::Loop()
 				rooms_.push_back(Room(roomName, rooms_.size()));
 
 				// Inform everyone of the new room
-				NotifyNewRoom();
+				NotifyNewRoomCreated();
 			}
 			break;
 

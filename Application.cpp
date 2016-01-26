@@ -281,8 +281,13 @@ int Application::HandlePackets(Packet * packet)
 		case ID_CONNECTION_LOST:
 		case ID_DISCONNECTION_NOTIFICATION:
 			std::cout << "Lost Connection to Server" << std::endl;
-			rakpeer_->DeallocatePacket(packet);
-			return true;
+			
+			if (appstate == AS_JOIN)
+			{
+				notifyMessage = "Server is FULL!";
+			}
+
+			break;
 
 		case ID_WELCOME:
 		{
@@ -529,21 +534,47 @@ int Application::HandlePackets(Packet * packet)
 
 bool Application::joinUpdate()
 {
+	static bool connected = false;
+
 	if (updateInputBuffer(Ship::MAX_NAME_LENGTH))
 	{
-		// Initialize ships
-		ships_.push_back(new Ship(rand() % 4 + 1, rand() % 500 + 100, rand() % 400 + 100));
-		ships_.at(0)->SetName(inputBuffer.c_str());
-
 		// Reset the input buffer
 		inputBuffer = "";
 
 		// Connect to the server
-		if (rakpeer_->Connect("127.0.0.1", 1691, 0, 0))
+		if (!connected)
 		{
+			if (rakpeer_->Connect("127.0.0.1", 1691, 0, 0))
+			{
+				// Initialize ships
+				ships_.push_back(new Ship(rand() % 4 + 1, rand() % 500 + 100, rand() % 400 + 100));
+				ships_.at(0)->SetName(inputBuffer.c_str());
+				connected = true;
+			}
+			else
+			{
+				// Inform the user that we can't connect
+				notifyMessage = "Unable to connect to server!";
+			}
+		}
+	}
+
+	// If a Welcome Message was received, then go to the lobby
+	int msgID = HandlePackets(rakpeer_->Receive());
+	switch (msgID)
+	{
+		case ID_WELCOME:
 			// Go to the next state
 			appstate = AS_LOBBY;
-		}
+			break;
+		case ID_SERVER_FULL:
+			// Inform the user of the issue
+			notifyMessage = "Server is FULL!";
+			connected = false;
+			break;
+		case ID_DISCONNECTION_NOTIFICATION:
+			connected = false;
+			break;
 	}
 
 	return false;
@@ -710,6 +741,15 @@ void Application::joinRender()
 	// Show the user Input
 	font_->SetScale(1.5f);
 	font_->printf(screenwidth * 0.5f, screenheight * 0.2f, HGETEXT_CENTER, "%s", inputBuffer.c_str());
+
+	// Render error messages
+	if (notifyMessage.length() > 0)
+	{
+		font_->SetColor(ARGB(255, 255, 0, 0));
+		font_->SetScale(0.8f);
+		font_->printf(screenwidth * 0.5f, screenheight * 0.9f, HGETEXT_CENTER, "Error: %s", notifyMessage.c_str());
+		font_->SetColor(ARGB(255, 255, 255, 255));
+	}
 }
 
 void Application::lobbyRender()

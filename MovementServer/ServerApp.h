@@ -32,6 +32,9 @@ class ServerApp
 	// TypeDefs
 	typedef std::map<SystemAddress, GameObject> ClientMap;
 
+	// Max Users
+	static const int MAX_CONNECTIONS = 1;
+
 	// RakNet
 	RakPeerInterface* rakpeer_;
 
@@ -49,7 +52,8 @@ class ServerApp
 
 	// Notification Functions
 	// -- These functions update the clients on the server state
-	void NotifyNewRoom();
+	void NotifyServerFull(SystemAddress& addr);
+	void NotifyNewRoomCreated();
 
 public:
 	ServerApp();

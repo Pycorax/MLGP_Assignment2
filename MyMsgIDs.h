@@ -7,6 +7,8 @@ enum MyMsgIDs
 {
 	// Connection
 	ID_WELCOME = ID_USER_PACKET_ENUM,
+	ID_SERVER_FULL,
+	// Rooms
 	ID_NEWROOM,
 	ID_JOINROOM,
 	ID_LEAVEROOM,

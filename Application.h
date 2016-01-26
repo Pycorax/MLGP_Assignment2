@@ -76,6 +76,7 @@ class Application
 	 * Input
 	 */
 	string inputBuffer;
+	string notifyMessage;		// This string is used to display notifications to the user on any scene.
 
 
 	/*
