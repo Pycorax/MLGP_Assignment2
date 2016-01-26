@@ -21,9 +21,9 @@ void ServerApp::NotifyNewRoom()
 	bs.Write(rooms_.back().GetID());
 
 	// Broadcast to everyone that this new room has been created
-	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, UNASSIGNED_SYSTEM_ADDRESS, false);
+	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
 
-	std::cout << "Created new room: " << rooms_.back().GetName() << " of ID #" << rooms_.back().GetID() << "!" << std::endl;
+	std::cout << "Created new room: " << rooms_.back().GetName() << " of ID #" << rooms_.back().GetID() << "!" << static_cast<unsigned char>(ID_NEWROOM) << std::endl;
 }
 
 ServerApp::ServerApp() :
