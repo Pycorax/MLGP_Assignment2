@@ -59,9 +59,9 @@ class Application
 	 * Application
 	 */
 	HGE* hge_; //!< Instance of the internal graphics engine
-	std::auto_ptr<hgeFont> font_;
+	hgeFont* font_;
 	HTEXTURE textures_[TT_TOTAL];
-	std::auto_ptr<hgeSprite> sprites_[ST_TOTAL];
+	hgeSprite* sprites_[ST_TOTAL];
 	APP_STATE appstate;
 	
 	/*

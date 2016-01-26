@@ -23,8 +23,8 @@ class Button
 
 	// HGE
 	HTEXTURE tex_; //!< Handle to the sprite's texture
-	std::auto_ptr<hgeSprite> sprite; //!< The sprite used to display the ship
-	std::auto_ptr<hgeFont> font;
+	hgeSprite* sprite; //!< The sprite used to display the ship
+	hgeFont* font;
 	hgeRect collidebox;
 
 	// Text
@@ -38,7 +38,7 @@ public:
 	~Button();
 
 	void Init(hgeSprite* sprite, hgeFont* font, int posX, int posY, int scaleX, int scaleY, string text = "");
-	void Update(int mousePosX, int mousePosY);
+	void Update(int mousePosX, int mousePosY, bool leftClicked);
 	void Render(void) const;
 
 	bool GetState(void) const;

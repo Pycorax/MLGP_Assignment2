@@ -87,17 +87,17 @@ bool Application::Init()
 		textures_[TT_BOOM] = hge_->Texture_Load("boom.png");
 
 		// Load Sprites
-		sprites_[ST_BG].reset(new hgeSprite(textures_[TT_BG], 0, 0, screenwidth, screenheight));
+		sprites_[ST_BG] = new hgeSprite(textures_[TT_BG], 0, 0, screenwidth, screenheight);
 		sprites_[ST_BG]->SetHotSpot(screenwidth * 0.5f, screenheight * 0.5f);
-		sprites_[ST_BOOM].reset(new hgeSprite(textures_[TT_BOOM], 0, 0, 40, 40));
+		sprites_[ST_BOOM] = new hgeSprite(textures_[TT_BOOM], 0, 0, 40, 40);
 		sprites_[ST_BOOM]->SetHotSpot(20, 20);
 
 		// Load Fonts
-		font_.reset(new hgeFont("font1.fnt"));
+		font_ = new hgeFont("font1.fnt");
 		font_->SetScale(0.5);
 
 		// Set up the Buttons
-		//buttons[BT_START].Init(sprites_[ST_BOOM].get(), font_.get(), 30, 30, 60, 30, "Test");
+		buttons[BT_START].Init(sprites_[ST_BOOM], font_, 30, 30, 60, 30, "Test");
 
 		// Attempt to start up RakNet
 		if (rakpeer_->Startup(1,30,&SocketDescriptor(), 1))
@@ -200,7 +200,8 @@ void Application::Shutdown()
 
 	for (size_t i = 0; i < ST_TOTAL; ++i)
 	{
-		sprites_[i].release();
+		delete sprites_[i];
+		sprites_[i] = nullptr;
 	}
 
 	hge_->System_Shutdown();
@@ -556,7 +557,7 @@ bool Application::lobbyUpdate()
 	// Button Handling
 	for (auto& button : buttons)
 	{
-		button.Update(mouseXPos, mouseYPos);
+		button.Update(mouseXPos, mouseYPos, hge_->Input_GetKeyState(HGEK_LBUTTON));
 	}
 
 	if (buttons[BT_START].GetState())
@@ -727,7 +728,7 @@ void Application::lobbyRender()
 	// Renders the Buttons
 	for (auto button : buttons)
 	{
-		//button.Render();
+		button.Render();
 	}
 
 	// Renders the list of all players connected

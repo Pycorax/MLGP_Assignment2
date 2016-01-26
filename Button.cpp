@@ -20,8 +20,8 @@ Button::~Button()
 
 void Button::Init(hgeSprite * sprite, hgeFont * font, int posX, int posY, int scaleX, int scaleY, string text)
 {
-	this->sprite.reset(sprite);
-	this->font.reset(font);
+	this->sprite = sprite;
+	this->font = font;
 
 	positionX = posX;
 	positionY = posY;
@@ -31,9 +31,10 @@ void Button::Init(hgeSprite * sprite, hgeFont * font, int posX, int posY, int sc
 	buttonText = text;
 }
 
-void Button::Update(int mousePosX, int mousePosY)
+void Button::Update(int mousePosX, int mousePosY, bool leftClicked)
 {
-	if (
+	if (leftClicked
+		&&
 		mousePosX > positionX - scaleX * 0.5f && mousePosX < positionX + scaleX * 0.5f
 		&&
 		mousePosY > positionY - scaleY * 0.5f && mousePosY < positionY + scaleY * 0.5f
