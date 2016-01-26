@@ -3,9 +3,12 @@
 
 #include "RakNetTypes.h"
 #include <map>
+#include <vector>
 #include <string>
+#include "Room.h"
 
 using std::string;
+using std::vector;
 
 class RakPeerInterface;
 
@@ -26,10 +29,16 @@ struct GameObject
 
 class ServerApp
 {
-	RakPeerInterface* rakpeer_;
+	// TypeDefs
 	typedef std::map<SystemAddress, GameObject> ClientMap;
 
-	ClientMap clients_;
+	// RakNet
+	RakPeerInterface* rakpeer_;
+
+	// Client Data Storage
+	ClientMap clients_;				// Stores all the clients
+	Room lobby;						// Stores references to clients in the lobby
+	vector<Room> rooms_;			// Stores references to clients in a room
 
 	unsigned int newID;
 	
@@ -37,6 +46,10 @@ class ServerApp
 	void SendDisconnectionNotification(SystemAddress& addr);
 	void ProcessInitialPosition( SystemAddress& addr, string name, float x_, float y_, int type_);
 	void UpdatePosition( SystemAddress& addr, float x_, float y_ );
+
+	// Notification Functions
+	// -- These functions update the clients on the server state
+	void NotifyNewRoom();
 
 public:
 	ServerApp();

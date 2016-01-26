@@ -92,6 +92,7 @@
     <ClCompile Include="ServerApp.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Room.h" />
     <ClInclude Include="ServerApp.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

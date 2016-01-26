@@ -132,6 +132,8 @@ bool Application::Update()
 			return joinUpdate();
 		case AS_LOBBY:
 			return lobbyUpdate();
+		case AS_NEWROOM:
+			return newRoomUpdate();
 		case AS_GAME:
 			return gameUpdate();
 	}
@@ -155,6 +157,9 @@ void Application::Render()
 			break;
 		case AS_LOBBY:
 			lobbyRender();
+			break;
+		case AS_NEWROOM:
+			newRoomRender();
 			break;
 		case AS_GAME:
 			gameRender();
@@ -248,7 +253,7 @@ bool Application::ControlUpdate(double dt)
 	return false;
 }
 
-bool Application::HandlePackets(Packet * packet)
+int Application::HandlePackets(Packet * packet)
 {
 	if (packet)
 	{
@@ -289,7 +294,8 @@ bool Application::HandlePackets(Packet * packet)
 			bs.Read(id);
 			ships_.at(0)->setID(id);
 			bs.Read(shipcount);
-
+			
+			// Receive list of all ships
 			for (unsigned int i = 0; i < shipcount; ++i)
 			{
 				bs.Read(nameArray);
@@ -297,16 +303,73 @@ bool Application::HandlePackets(Packet * packet)
 				bs.Read(x_);
 				bs.Read(y_);
 				bs.Read(type_);
-				std::cout << "New Ship pos" << x_ << " " << y_ << std::endl;
+				std::cout << "New Ship " << nameArray << " at pos" << x_ << " " << y_ << std::endl;
 				Ship* ship = new Ship(type_, x_, y_);
 				ship->SetName(nameArray);
 				ship->setID(id);
 				ships_.push_back(ship);
 			}
 
+			
+			// Receive rooms data
+			// - Define variables for reading
+			char roomName[Room::MAX_ROOM_NAME_LENGTH];
+			int numShips = 0;
+			int shipID = 0;
+			// -- Get number of rooms
+			unsigned numRooms = 0;
+			bs.Read(numRooms);
+
+			// -- Iterate through the rooms we expect
+			for (unsigned int i = 0; i < numRooms; ++i)
+			{
+				// Initialize each room
+				// -- Get the room name
+				bs.Read(roomName);
+
+				// -- Create the room
+				roomsList.push_back(Room(roomName));
+
+				// -- Get the number of ships in this room
+				bs.Read(numShips);
+
+				// -- Receive the IDs of ships in this room
+				for (unsigned int ship = 0; ship < numShips; ++ship)
+				{
+					// Retrieve the ship ID
+					bs.Read(shipID);
+
+					// Add the ID in
+					roomsList.back().AddUser(shipID);
+				}
+
+				std::cout << "New Room: " << roomName << " with " << numShips << " players." << std::endl;
+			}
+
 			SendInitialPosition();
 		}
 		break;
+
+	#pragma region Room Messages
+
+		case ID_NEWROOM:
+		{
+			// Get the room name
+			char roomName[Room::MAX_ROOM_NAME_LENGTH];
+			bs.Read(roomName);
+			// Get the room ID
+			int roomID = 0;
+			bs.Read(roomID);
+
+			// Create the room
+			roomsList.push_back(Room(roomName, roomID));
+
+			std::cout << "New Room Created on Server: " << roomName << " #" << roomID << std::endl;
+		}
+		break;
+	#pragma endregion
+
+#pragma region Gameplay Messages
 
 		case ID_NEWSHIP:
 		{
@@ -445,25 +508,27 @@ bool Application::HandlePackets(Packet * packet)
 		}
 		break;
 
+#pragma endregion
+
 		default:
 		{
 			std::cout << "Unhandled Message Identifier: " << (int)msgid << std::endl;
 		}
 		break;
 		}
+
 		rakpeer_->DeallocatePacket(packet);
+
+		return msgid;
 	}
+
+	// No messages
+	return -1;
 }
 
 bool Application::joinUpdate()
 {
-	static const double BACKSPACE_DELAY = 0.1f;
-	static double timePassed = 0.0f;
-
-	// Update the timer
-	timePassed += hge_->Timer_GetDelta();
-
-	if (hge_->Input_GetKeyState(HGEK_ENTER))
+	if (updateInputBuffer(Ship::MAX_NAME_LENGTH))
 	{
 		// Initialize ships
 		ships_.push_back(new Ship(rand() % 4 + 1, rand() % 500 + 100, rand() % 400 + 100));
@@ -472,25 +537,11 @@ bool Application::joinUpdate()
 		// Reset the input buffer
 		inputBuffer = "";
 
-
+		// Connect to the server
 		if (rakpeer_->Connect("127.0.0.1", 1691, 0, 0))
 		{
 			// Go to the next state
 			appstate = AS_LOBBY;
-		}
-	}
-	else if (hge_->Input_GetKeyState(HGEK_BACKSPACE) && timePassed > BACKSPACE_DELAY)
-	{
-		inputBuffer = inputBuffer.substr(0, inputBuffer.length() - 1);
-		timePassed = 0.0f;
-	}
-	else
-	{
-		char input = hge_->Input_GetKey();
-
-		if (input >= ' ' && input <= '~' && inputBuffer.length() < Ship::MAX_NAME_LENGTH)
-		{
-			inputBuffer += input;
 		}
 	}
 
@@ -502,6 +553,7 @@ bool Application::lobbyUpdate()
 	float mouseXPos, mouseYPos;
 	hge_->Input_GetMousePos(&mouseXPos, &mouseYPos);
 
+	// Button Handling
 	for (auto& button : buttons)
 	{
 		button.Update(mouseXPos, mouseYPos);
@@ -512,7 +564,52 @@ bool Application::lobbyUpdate()
 		appstate = AS_GAME;
 	}
 
+	// Create new room
+	if (hge_->Input_GetKeyState(HGEK_R))
+	{
+		appstate = AS_NEWROOM;
+	}
+
+	// Packet Handling
 	HandlePackets(rakpeer_->Receive());
+
+	return false;
+}
+
+bool Application::newRoomUpdate()
+{
+	// Once the user has finished typing,
+	if (updateInputBuffer(Room::MAX_ROOM_NAME_LENGTH))
+	{
+		// Tell the server to create this room
+		// -- Create BitStream object
+		RakNet::BitStream bs;
+
+		// State the message type
+		bs.Write(static_cast<unsigned char>(ID_NEWROOM));
+
+		// Ship Update
+		bs.Write(inputBuffer.c_str());
+
+		// Send this message
+		rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
+
+		// Clear the input buffer
+		inputBuffer = "";
+
+		// Go back to the lobby
+		appstate = AS_LOBBY;
+	}
+
+	// If cancel creating new room
+	if (hge_->Input_GetKeyState(HGEK_ESCAPE))
+	{
+		// Reset the input buffer
+		inputBuffer = "";
+
+		// Go back to the lobby
+		appstate = AS_LOBBY;
+	}
 
 	return false;
 }
@@ -633,14 +730,61 @@ void Application::lobbyRender()
 		//button.Render();
 	}
 
-	// Renders the Lobby
+	// Renders the list of all players connected
+	// Render the Room Title
 	int shipNameYPos = screenheight * 0.3f;
+	font_->SetScale(1.5f);
+	font_->printf(screenwidth * 0.8f, shipNameYPos, HGETEXT_RIGHT, "%s",
+		"Player List");
+	// Renders the list of rooms
+	const int SHIP_Y_TITLE_OFFSET = 50;
+	const int SHIP_EACH_Y_OFFSET = 30;
+	shipNameYPos += SHIP_Y_TITLE_OFFSET;
 	font_->SetScale(1.0f);
 	for (auto ship : ships_)
 	{
-		font_->printf(screenwidth * 0.7f, shipNameYPos, HGETEXT_LEFT, "%s", ship->GetName().c_str());
-		shipNameYPos += 30.0f;
+		font_->printf(screenwidth * 0.8f, shipNameYPos, HGETEXT_RIGHT, "%s", ship->GetName().c_str());
+		shipNameYPos += SHIP_EACH_Y_OFFSET;
 	}
+
+	// Render the Room Title
+	int roomYPos = screenheight * 0.3f;
+	font_->SetScale(1.5f);
+	font_->printf(screenwidth * 0.2f, roomYPos, HGETEXT_LEFT, "%s",
+		"Rooms List");
+	// Renders the list of rooms
+	const int ROOM_Y_TITLE_OFFSET = 50;
+	const int ROOM_EACH_Y_OFFSET = 30;
+	roomYPos += ROOM_Y_TITLE_OFFSET;
+	font_->SetScale(1.0f);
+	for (auto room : roomsList)
+	{
+		// Render the name of a room
+		font_->printf(screenwidth * 0.2f, roomYPos, HGETEXT_LEFT, "%s",
+			room.GetName().c_str());
+
+		roomYPos += ROOM_EACH_Y_OFFSET;
+	}
+}
+
+bool Application::newRoomRender()
+{
+	float screenwidth = static_cast<float>(hge_->System_GetState(HGE_SCREENWIDTH));
+	float screenheight = static_cast<float>(hge_->System_GetState(HGE_SCREENHEIGHT));
+
+	// Renders the BG
+	sprites_[ST_BG]->RenderEx(screenwidth * 0.5f, screenheight * 0.5f, 0);
+
+	// Renders the Title
+	font_->SetScale(2.5f);
+	font_->printf(screenwidth * 0.5f, screenheight * 0.1f, HGETEXT_CENTER, "%s",
+		"Enter room name:");
+
+	// Show the user Input
+	font_->SetScale(1.5f);
+	font_->printf(screenwidth * 0.5f, screenheight * 0.2f, HGETEXT_CENTER, "%s", inputBuffer.c_str());
+
+	return false;
 }
 
 void Application::gameRender()
@@ -690,6 +834,36 @@ bool Application::SendInitialPosition()
 	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
 
 	return true;
+}
+
+bool Application::updateInputBuffer(int maxBufferLength)
+{
+	static const double BACKSPACE_DELAY = 0.1f;
+	static double timePassed = 0.0f;
+
+	// Update the timer
+	timePassed += hge_->Timer_GetDelta();
+
+	if (hge_->Input_GetKeyState(HGEK_ENTER))
+	{
+		return true;
+	}
+	else if (hge_->Input_GetKeyState(HGEK_BACKSPACE) && timePassed > BACKSPACE_DELAY)
+	{
+		inputBuffer = inputBuffer.substr(0, inputBuffer.length() - 1);
+		timePassed = 0.0f;
+	}
+	else
+	{
+		char input = hge_->Input_GetKey();
+
+		if (input >= ' ' && input <= '~' && inputBuffer.length() < maxBufferLength)
+		{
+			inputBuffer += input;
+		}
+	}
+
+	return false;
 }
 
 bool Application::checkCollisions(Ship* ship)

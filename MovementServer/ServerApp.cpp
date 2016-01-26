@@ -7,7 +7,26 @@
 #include <iostream>
 #include "../ship.h"
 
-ServerApp::ServerApp() : 
+void ServerApp::NotifyNewRoom()
+{
+	RakNet::BitStream bs;
+
+	// State the purpose of the message
+	bs.Write(static_cast<unsigned char>(ID_NEWROOM));
+
+	// Send details of the new room
+	// --Send the room name
+	bs.Write(rooms_.back().GetName().c_str());
+	// -- Send the room ID
+	bs.Write(rooms_.back().GetID());
+
+	// Broadcast to everyone that this new room has been created
+	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, UNASSIGNED_SYSTEM_ADDRESS, false);
+
+	std::cout << "Created new room: " << rooms_.back().GetName() << " of ID #" << rooms_.back().GetID() << "!" << std::endl;
+}
+
+ServerApp::ServerApp() :
 	rakpeer_(RakNetworkFactory::GetRakPeerInterface()),
 	newID(0)
 {
@@ -64,7 +83,24 @@ void ServerApp::Loop()
 				ProcessInitialPosition( packet->systemAddress, name_, x_, y_, type_);
 			}
 			break;
+#pragma region Room Management Messages
 
+		case ID_NEWROOM:
+			{
+				// Receive the room name
+				char roomName[Room::MAX_ROOM_NAME_LENGTH];
+				bs.Read(roomName);
+				// Create the room
+				rooms_.push_back(Room(roomName, rooms_.size()));
+
+				// Inform everyone of the new room
+				NotifyNewRoom();
+			}
+			break;
+
+#pragma endregion
+
+	#pragma region Game Messages
 		case ID_MOVEMENT:
 			{
 				float x, y;
@@ -101,6 +137,7 @@ void ServerApp::Loop()
 			rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE, 0, packet->systemAddress, true);
 		}
 		break;
+	#pragma endregion
 
 		default:
 			std::cout << "Unhandled Message Identifier: " << (int)msgid << std::endl;
@@ -117,10 +154,12 @@ void ServerApp::SendWelcomePackage(SystemAddress& addr)
 	unsigned char msgid = ID_WELCOME;
 	
 	RakNet::BitStream bs;
+	// Send ship ID
 	bs.Write(msgid);
 	bs.Write(newID);
 	bs.Write(shipcount);
 
+	// Send list of ships
 	for (ClientMap::iterator itr = clients_.begin(); itr != clients_.end(); ++itr)
 	{
 		std::cout << "Ship " << itr->second.name << " (" << itr->second.id << ") pos" << itr->second.x_ << " " << itr->second.y_ << std::endl;
@@ -129,6 +168,29 @@ void ServerApp::SendWelcomePackage(SystemAddress& addr)
 		bs.Write( itr->second.x_ );
 		bs.Write( itr->second.y_ );
 		bs.Write( itr->second.type_ );
+	}
+
+	// Send list of rooms and members
+	// -- Send the number of rooms so that the client knows what to expect
+	bs.Write(rooms_.size());
+
+	// -- Send each room
+	for (auto room : rooms_)
+	{
+		// Send the room name
+		bs.Write(room.GetName().c_str());
+
+		// Get the list of users
+		auto connectedIDs = room.GetConnectedIDs();
+
+		// Send the number of users so that the client knows what to expect
+		bs.Write(connectedIDs.size());
+
+		// Send the list of users
+		for (auto id : connectedIDs)
+		{
+			bs.Write(id);
+		}
 	}
 
 	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED,0, addr, false);
@@ -187,6 +249,9 @@ void ServerApp::ProcessInitialPosition( SystemAddress& addr, string name_, float
 	bs.Write(itr->second.type_);
 
 	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, addr, true);
+
+	// Add this ship to the lobby
+	lobby.AddUser(itr->second.id);
 }
 
 void ServerApp::UpdatePosition( SystemAddress& addr, float x_, float y_ )

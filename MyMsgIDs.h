@@ -5,7 +5,11 @@
 
 enum MyMsgIDs
 {
+	// Connection
 	ID_WELCOME = ID_USER_PACKET_ENUM,
+	ID_NEWROOM,
+	ID_JOINROOM,
+	ID_LEAVEROOM,
 	// Ships
 	ID_NEWSHIP,
 	ID_LOSTSHIP,

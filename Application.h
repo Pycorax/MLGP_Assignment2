@@ -5,6 +5,7 @@
 #include "missile.h"
 #include <vector>
 #include "Button.h"
+#include "MovementServer\Room.h"
 
 class HGE;
 class hgeFont;
@@ -29,6 +30,7 @@ class Application
 	{
 		AS_JOIN,
 		AS_LOBBY,
+		AS_NEWROOM,
 		AS_GAME,
 		AS_TOTAL
 	};
@@ -69,7 +71,7 @@ class Application
 	unsigned int timer_;
 	const int TICK_RATE = 24;
 	const int NETWORK_UPDATE_DELTA = 1000 / TICK_RATE;
-	
+
 	/*
 	 * Input
 	 */
@@ -80,8 +82,10 @@ class Application
 	 * Gameplay
 	 */
 	// Ships
-	typedef std::vector<Ship*> ShipList;  //!< A list of ships
-	ShipList ships_; //!< List of all the ships in the universe
+	typedef std::vector<Ship*> ShipList;	//!< A list of ships
+	ShipList ships_;						//!< List of all the ships in the universe
+	vector<Room> roomsList;					// List of rooms
+	
 	// Missiles
 	Missile* mymissile;
 	bool have_missile;
@@ -97,19 +101,24 @@ class Application
 	static bool Loop();
 	void Shutdown();
 	bool ControlUpdate(double dt);
-	bool HandlePackets(Packet* packet);
+
+	// -- Packet Handling
+	int HandlePackets(Packet* packet);
 
 	// -- State Updates
 	bool joinUpdate();
 	bool lobbyUpdate();
+	bool newRoomUpdate();
 	bool gameUpdate();
 
 	// -- State Renders
 	void joinRender();
 	void lobbyRender();
+	bool newRoomRender();
 	void gameRender();
 
 	// Others
+	bool updateInputBuffer(int maxBufferLength);
 	bool checkCollisions(Ship* ship);
 	bool SendInitialPosition();
 
