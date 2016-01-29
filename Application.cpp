@@ -101,7 +101,7 @@ bool Application::Init()
 		font_->SetScale(0.5);
 
 		// Set up the Buttons
-		buttons[BT_START].Init(sprites_[ST_BUTTON], font_, screenwidth * 0.7f, screenheight * 0.9f, 250, 50, "Start Game");
+		buttons[BT_QUIT].Init(sprites_[ST_BUTTON], font_, screenwidth * 0.7f, screenheight * 0.9f, 250, 50, "Quit");
 		buttons[BT_NEWROOM].Init(sprites_[ST_BUTTON], font_, screenwidth * 0.3f, screenheight * 0.9f, 250, 50, "New Room");
 
 		// Define the start Y position that the room header should be printed from
@@ -615,9 +615,9 @@ bool Application::lobbyUpdate()
 		button.Update(mouseXPos, mouseYPos, hge_->Input_GetKeyState(HGEK_LBUTTON));
 	}
 
-	if (buttons[BT_START].GetState())
+	if (buttons[BT_QUIT].GetState())
 	{
-		appstate = AS_GAME;
+		return true;
 	}
 	else if (buttons[BT_NEWROOM].GetState())
 	{

@@ -54,8 +54,8 @@ class Application
 
 	enum BUTTON_TYPE
 	{
-		BT_START,
 		BT_NEWROOM,
+		BT_QUIT,
 		BT_TOTAL
 	};
 
