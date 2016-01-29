@@ -12,7 +12,7 @@ void ServerApp::NotifyServerFull(SystemAddress & addr)
 	RakNet::BitStream bs;
 
 	// State the purpose of the message
-	bs.Write(static_cast<unsigned char>(ID_NEWROOM));
+	bs.Write(static_cast<unsigned char>(ID_SERVER_FULL));
 
 	// Broadcast to everyone that this new room has been created
 	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, addr, false);

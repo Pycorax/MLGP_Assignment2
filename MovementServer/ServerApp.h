@@ -44,7 +44,7 @@ private:
 	float loopDelay[THREAD_TOTAL];
 
 	// Max Users
-	static const int MAX_CONNECTIONS = 1;
+	static const int MAX_CONNECTIONS = 10;
 
 	// RakNet
 	RakPeerInterface* rakpeer_;
