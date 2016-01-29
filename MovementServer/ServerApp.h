@@ -29,8 +29,19 @@ struct GameObject
 
 class ServerApp
 {
+public:
+	enum THREAD_TYPE
+	{
+		THREAD_PACKET_HANDLER,
+		THREAD_TOTAL
+	};
+
+private:
 	// TypeDefs
 	typedef std::map<SystemAddress, GameObject> ClientMap;
+
+	// Loop Delays (Prevent code from executing too fast)
+	float loopDelay[THREAD_TOTAL];
 
 	// Max Users
 	static const int MAX_CONNECTIONS = 1;
@@ -62,9 +73,10 @@ class ServerApp
 	Room* findRoom(int roomID);
 
 public:
-	ServerApp();
+	ServerApp(float packetHandlerDelay = 10.0f);
 	~ServerApp();
-	void Loop();
+
+	void PacketHandlerLoop();
 };
 
 #endif

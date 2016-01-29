@@ -83,13 +83,14 @@ Room* ServerApp::findRoom(int roomID)
 	return nullptr;
 }
 
-ServerApp::ServerApp() :
-	rakpeer_(RakNetworkFactory::GetRakPeerInterface()),
-	newID(0)
+ServerApp::ServerApp(float packetHandlerDelay) 
+	: rakpeer_(RakNetworkFactory::GetRakPeerInterface())
+	, newID(0)
 {
 	rakpeer_->Startup(100, 30, &SocketDescriptor(1691, 0), 1);
 	rakpeer_->SetMaximumIncomingConnections(MAX_CONNECTIONS);
 	rakpeer_->SetOccasionalPing(true);
+	loopDelay[THREAD_PACKET_HANDLER] = packetHandlerDelay;
 	std::cout << "Server Started" << std::endl;
 }
 
@@ -99,8 +100,10 @@ ServerApp::~ServerApp()
 	RakNetworkFactory::DestroyRakPeerInterface(rakpeer_);
 }
 
-void ServerApp::Loop()
+void ServerApp::PacketHandlerLoop()
 {
+	Sleep(loopDelay[THREAD_PACKET_HANDLER]);
+
 	if (Packet* packet = rakpeer_->Receive())
 	{
 		RakNet::BitStream bs(packet->data, packet->length, false);
