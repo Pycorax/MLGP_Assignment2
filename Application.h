@@ -105,6 +105,10 @@ class Application
 	typedef std::vector<Missile*> MissileList;
 	MissileList missiles_;
 
+	// Rooms
+	Room* currentRoom;			// Stores a pointer to the current room we are in. If nullptr, means is in lobby
+	bool joiningRoom;
+
 	// Buttons
 	Button buttons[BT_TOTAL];
 	vector<RoomButton> roomButtons;
@@ -114,6 +118,7 @@ class Application
 	static bool Loop();
 	void Shutdown();
 	bool ControlUpdate(double dt);
+	void changeState(APP_STATE state);
 
 	// -- Packet Handling
 	int HandlePackets(Packet* packet);
@@ -132,6 +137,8 @@ class Application
 
 	// Rooms
 	void createRoomButton(Room* rm);
+	void joinRoom(int roomID);
+	Room* findRoom(int roomID);
 
 	// Others
 	bool updateInputBuffer(int maxBufferLength);

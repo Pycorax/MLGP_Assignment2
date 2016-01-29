@@ -39,6 +39,50 @@ void ServerApp::NotifyNewRoomCreated()
 	std::cout << "Created new room: " << rooms_.back().GetName() << " of ID #" << rooms_.back().GetID() << "!" << static_cast<unsigned char>(ID_NEWROOM) << std::endl;
 }
 
+void ServerApp::NotifyUserJoinedRoom(SystemAddress & userThatJoined, int roomJoined)
+{
+	RakNet::BitStream bs;
+
+	// State the purpose of the message
+	bs.Write(static_cast<unsigned char>(ID_JOINROOM));
+
+	// Send details of the situation
+	// -- The ID of the person that joined the room
+	bs.Write(clients_.at(userThatJoined).id);
+	// -- The room that the person joined
+	bs.Write(roomJoined);
+	// Broadcast to everyone that this new room has been created
+	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
+}
+
+bool ServerApp::userIsInARoom(int userID)
+{
+	auto userLobbyList = lobby.GetConnectedIDs();
+
+	for (auto user : userLobbyList)
+	{
+		if (user == userID)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+Room* ServerApp::findRoom(int roomID)
+{
+	for (auto room : rooms_)
+	{
+		if (room.GetID() == roomID)
+		{
+			return &room;
+		}
+	}
+
+	return nullptr;
+}
+
 ServerApp::ServerApp() :
 	rakpeer_(RakNetworkFactory::GetRakPeerInterface()),
 	newID(0)
@@ -115,6 +159,40 @@ void ServerApp::Loop()
 
 				// Inform everyone of the new room
 				NotifyNewRoomCreated();
+			}
+			break;
+
+		case ID_JOINROOM:
+			{
+				// Receive the room ID to join
+				int roomID = -1;
+				bs.Read(roomID);
+				// Check if this user is in a room
+				int userID = clients_.at(packet->systemAddress).id;
+				if (!userIsInARoom(userID))
+				{
+					// Since he is not in a room, let's let him join the room
+					Room* rm = findRoom(roomID);
+
+					// If we found the room
+					if (rm != nullptr)
+					{
+						// Add the User
+						rm->AddUser(userID);
+						// Notify the user that he has joined and everyone that someone has entered this room
+						NotifyUserJoinedRoom(packet->systemAddress, roomID);
+						// Print on Server
+						std::cout << "User #" << userID << " has joined room #" << roomID << ": " << rm->GetName() << "!" << std::endl;
+					}
+					else
+					{
+						std::cout << "User #" << userID << " tried to join non-existent room #" << roomID << std::endl;
+					}
+				}
+				else
+				{
+					std::cout << "User #" << userID << " tried to join room #" << roomID << " while in a room." << std::endl;
+				}
 			}
 			break;
 

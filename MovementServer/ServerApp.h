@@ -54,6 +54,12 @@ class ServerApp
 	// -- These functions update the clients on the server state
 	void NotifyServerFull(SystemAddress& addr);
 	void NotifyNewRoomCreated();
+	void NotifyUserJoinedRoom(SystemAddress& userThatJoined, int roomJoined);
+
+	// Rooms Helper Functions
+	// -- Function to check if the user is in a room
+	bool userIsInARoom(int userID);
+	Room* findRoom(int roomID);
 
 public:
 	ServerApp();

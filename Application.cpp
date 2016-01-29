@@ -39,6 +39,8 @@ Application::Application()
 	// Lab 13 Task 2 : add new initializations
 	, mymissile(nullptr)
 	, keydown_enter(false)
+	, joiningRoom(false)
+	, currentRoom(nullptr)
 {
 }
 
@@ -105,7 +107,7 @@ bool Application::Init()
 		buttons[BT_NEWROOM].Init(sprites_[ST_BUTTON], font_, screenwidth * 0.3f, screenheight * 0.9f, 250, 50, "New Room");
 
 		// Define the start Y position that the room header should be printed from
-		roomHeaderYPos = screenheight * 0.3f;
+		roomHeaderYPos = screenheight * 0.2f;
 
 		// Attempt to start up RakNet
 		if (rakpeer_->Startup(1,30,&SocketDescriptor(), 1))
@@ -262,6 +264,16 @@ bool Application::ControlUpdate(double dt)
 	return false;
 }
 
+void Application::changeState(APP_STATE state)
+{
+	appstate = state;
+	// Reset the notify message
+	notifyMessage = "";
+
+	// Reset the input buffer
+	inputBuffer = "";
+}
+
 int Application::HandlePackets(Packet * packet)
 {
 	if (packet)
@@ -384,6 +396,44 @@ int Application::HandlePackets(Packet * packet)
 			std::cout << "New Room Created on Server: " << roomName << " #" << roomID << std::endl;
 		}
 		break;
+
+		case ID_JOINROOM:
+		{
+			// Get the room name
+			int userID;
+			bs.Read(userID);
+			// Get the room ID
+			int roomID = 0;
+			bs.Read(roomID);
+			
+			// Update the room
+			// -- Find the room
+			Room* rm = findRoom(roomID);
+			if (rm)
+			{
+				// Add the user into the room to update the room
+				rm->AddUser(userID);
+
+				// Check if we are the one getting the join message
+				if (userID == ships_.at(0)->GetID())
+				{
+					// Set the current room
+					currentRoom = rm;
+					// We have joined!, we can trying stop now.
+					joiningRoom = false;
+					// Go to the game
+					changeState(AS_GAME);
+
+					std::cout << "Joined room #" << roomID << "!" << std::endl;
+				}
+				else
+				{
+					std::cout << "User #" << userID << " has joined room #" << roomID << "!" << std::endl;
+				}
+			}
+		}
+		break;
+
 	#pragma endregion
 
 #pragma region Gameplay Messages
@@ -578,7 +628,7 @@ bool Application::joinUpdate()
 	{
 		case ID_WELCOME:
 			// Go to the next state
-			appstate = AS_LOBBY;
+			changeState(AS_LOBBY);
 			break;
 		case ID_SERVER_FULL:
 			// Inform the user of the issue
@@ -621,7 +671,23 @@ bool Application::lobbyUpdate()
 	}
 	else if (buttons[BT_NEWROOM].GetState())
 	{
-		appstate = AS_NEWROOM;
+		changeState(AS_NEWROOM);
+	}
+
+	if (!joiningRoom)
+	{
+		for (auto& rb : roomButtons)
+		{
+			rb.Update(mouseXPos, mouseYPos, hge_->Input_GetKeyState(HGEK_LBUTTON));
+
+			if (rb.GetState())
+			{
+				// Request to enter a room
+				joinRoom(rb.GetRoomID());
+				notifyMessage = "Attempting to join the room...";
+				break;
+			}
+		}
 	}
 
 	// Packet Handling
@@ -648,21 +714,15 @@ bool Application::newRoomUpdate()
 		// Send this message
 		rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
 
-		// Clear the input buffer
-		inputBuffer = "";
-
 		// Go back to the lobby
-		appstate = AS_LOBBY;
+		changeState(AS_LOBBY);
 	}
 
 	// If cancel creating new room
 	if (hge_->Input_GetKeyState(HGEK_ESCAPE))
 	{
-		// Reset the input buffer
-		inputBuffer = "";
-
 		// Go back to the lobby
-		appstate = AS_LOBBY;
+		changeState(AS_LOBBY);
 	}
 
 	return false;
@@ -677,20 +737,34 @@ bool Application::gameUpdate()
 	ships_.at(0)->SetAngularVelocity(0.0f);
 
 	// Get Controls
-	if (ControlUpdate(timedelta))
+	ControlUpdate(timedelta);
+
+	// Get a list of ships in this room
+	ShipList roomShips;
+	auto shipsInRoom = currentRoom->GetConnectedIDs();
+	for (auto ship : ships_)
 	{
-		// True is returned to end the game
-		return true;
+		// Check if this ship is in the room
+		for (auto s : shipsInRoom)
+		{
+			if (ship->GetID() == s)
+			{
+				roomShips.push_back(ship);
+				break;
+			}
+		}
 	}
 
-	// Update all the ships
-	for (ShipList::iterator ship = ships_.begin(); ship != ships_.end(); ship++)
+	// Update all the ships in this room
+	for (auto ship : roomShips)
 	{
-		(*ship)->Update(timedelta);
+		ship->Update(timedelta);
 
-		//collisions
-		if ((*ship) == ships_.at(0))
-			checkCollisions((*ship));
+		// Check collisions with ships
+		if (ship == ships_.at(0))
+		{
+			checkCollisions(ship);
+		}
 	}
 
 	// Update my missile
@@ -710,15 +784,35 @@ bool Application::gameUpdate()
 		}
 	}
 
-	// Update network missiles
-	for (auto missile = missiles_.begin(); missile != missiles_.end(); ++missile)
+	// Update network missiles in this room
+	for (auto missileItr = missiles_.begin(); missileItr != missiles_.end(); ++missileItr)
 	{
-		if (Ship* collision = (*missile)->Update(ships_, timedelta))
+		Missile* missile = *missileItr;
+
+		// Check if this missile is in this room
+		bool missileIsInRoom = false;
+		for (auto s : shipsInRoom)
+		{
+			if (missile->GetOwnerID() == s)
+			{
+				missileIsInRoom = true;
+				break;
+			}
+		}
+
+		// Do not care about missiles not in this room
+		if (!missileIsInRoom)
+		{
+			continue;
+		}
+
+		// Collision checking with ships
+		if (Ship* collision = missile->Update(roomShips, timedelta))
 		{
 			// Have collision
-			delete *missile;
-			collision->Injure((*missile)->GetDamage());
-			missiles_.erase(missile);
+			delete missile;
+			collision->Injure(missile->GetDamage());
+			missiles_.erase(missileItr);
 
 			std::cout << "COLLISION!" << std::endl;
 			break;
@@ -784,7 +878,7 @@ void Application::lobbyRender()
 
 	// Renders the Title
 	font_->SetScale(2.5f);
-	font_->printf(screenwidth * 0.5f, screenheight * 0.1f, HGETEXT_CENTER, "%s",
+	font_->printf(screenwidth * 0.5f, screenheight * 0.05f, HGETEXT_CENTER, "%s",
 		"Game Lobby");
 
 	// Renders the Buttons
@@ -794,8 +888,8 @@ void Application::lobbyRender()
 	}
 
 	// Renders the list of all players connected
-	// Render the Room Title
-	int shipNameYPos = screenheight * 0.3f;
+	// Render the Title
+	int shipNameYPos = screenheight * 0.15f;
 	font_->SetColor(ARGB(255, 255, 255, 255));
 	font_->SetScale(1.5f);
 	font_->printf(screenwidth * 0.8f, shipNameYPos, HGETEXT_RIGHT, "%s",
@@ -818,6 +912,15 @@ void Application::lobbyRender()
 	for (auto bt : roomButtons)
 	{
 		bt.Render();
+	}
+
+	// Render error messages
+	if (notifyMessage.length() > 0)
+	{
+		font_->SetColor(ARGB(255, 255, 0, 0));
+		font_->SetScale(0.8f);
+		font_->printf(screenwidth * 0.5f, screenheight * 0.8f, HGETEXT_CENTER, "%s", notifyMessage.c_str());
+		font_->SetColor(ARGB(255, 255, 255, 255));
 	}
 }
 
@@ -877,6 +980,34 @@ void Application::createRoomButton(Room* rm)
 
 	bt.Init(rm, sprites_[ST_BUTTON], font_, screenwidth * 0.2f + 125, roomHeaderYPos + 10 + (roomButtons.size() + 1) * 55, 250, 50);
 	roomButtons.push_back(bt);
+}
+
+void Application::joinRoom(int roomID)
+{
+	RakNet::BitStream bs;
+	unsigned char msgid = ID_JOINROOM;
+	bs.Write(msgid);
+	bs.Write(roomID);
+
+	std::cout << "Attempting to join room #" << roomID << "!" << std::endl;
+
+	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
+
+	// Set the flag for joining a room
+	joiningRoom = true;
+}
+
+Room * Application::findRoom(int roomID)
+{
+	for (auto& room : roomsList)
+	{
+		if (room.GetID() == roomID)
+		{
+			return &room;
+		}
+	}
+
+	return nullptr;
 }
 
 /** 
