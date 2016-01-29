@@ -69,6 +69,7 @@ bool Application::Init()
 	hge_->System_SetState(HGE_FRAMEFUNC, Application::Loop);
 	hge_->System_SetState(HGE_WINDOWED, true);
 	hge_->System_SetState(HGE_USESOUND, false);
+	hge_->System_SetState(HGE_HIDEMOUSE, false);
 	hge_->System_SetState(HGE_TITLE, "Multiplayer Game Programming Assignment 2");
 	hge_->System_SetState(HGE_SCREENWIDTH, 800);
 	hge_->System_SetState(HGE_SCREENHEIGHT, 600);
@@ -85,19 +86,26 @@ bool Application::Init()
 		// Load Textures
 		textures_[TT_BG] = hge_->Texture_Load("background.png");
 		textures_[TT_BOOM] = hge_->Texture_Load("boom.png");
+		textures_[TT_BUTTON] = hge_->Texture_Load("button.png");
 
 		// Load Sprites
 		sprites_[ST_BG] = new hgeSprite(textures_[TT_BG], 0, 0, screenwidth, screenheight);
 		sprites_[ST_BG]->SetHotSpot(screenwidth * 0.5f, screenheight * 0.5f);
 		sprites_[ST_BOOM] = new hgeSprite(textures_[TT_BOOM], 0, 0, 40, 40);
 		sprites_[ST_BOOM]->SetHotSpot(20, 20);
+		sprites_[ST_BUTTON] = new hgeSprite(textures_[TT_BUTTON], 0, 0, 250, 50);
+		sprites_[ST_BUTTON]->SetHotSpot(125, 25);
 
 		// Load Fonts
 		font_ = new hgeFont("font1.fnt");
 		font_->SetScale(0.5);
 
 		// Set up the Buttons
-		buttons[BT_START].Init(sprites_[ST_BOOM], font_, 30, 30, 60, 30, "Test");
+		buttons[BT_START].Init(sprites_[ST_BUTTON], font_, screenwidth * 0.7f, screenheight * 0.9f, 250, 50, "Start Game");
+		buttons[BT_NEWROOM].Init(sprites_[ST_BUTTON], font_, screenwidth * 0.3f, screenheight * 0.9f, 250, 50, "New Room");
+
+		// Define the start Y position that the room header should be printed from
+		roomHeaderYPos = screenheight * 0.3f;
 
 		// Attempt to start up RakNet
 		if (rakpeer_->Startup(1,30,&SocketDescriptor(), 1))
@@ -370,6 +378,9 @@ int Application::HandlePackets(Packet * packet)
 			// Create the room
 			roomsList.push_back(Room(roomName, roomID));
 
+			// Create the button for the room
+			createRoomButton(&roomsList.back());
+
 			std::cout << "New Room Created on Server: " << roomName << " #" << roomID << std::endl;
 		}
 		break;
@@ -608,9 +619,7 @@ bool Application::lobbyUpdate()
 	{
 		appstate = AS_GAME;
 	}
-
-	// Create new room
-	if (hge_->Input_GetKeyState(HGEK_R))
+	else if (buttons[BT_NEWROOM].GetState())
 	{
 		appstate = AS_NEWROOM;
 	}
@@ -787,10 +796,11 @@ void Application::lobbyRender()
 	// Renders the list of all players connected
 	// Render the Room Title
 	int shipNameYPos = screenheight * 0.3f;
+	font_->SetColor(ARGB(255, 255, 255, 255));
 	font_->SetScale(1.5f);
 	font_->printf(screenwidth * 0.8f, shipNameYPos, HGETEXT_RIGHT, "%s",
 		"Player List");
-	// Renders the list of rooms
+	// Renders the list of players connected
 	const int SHIP_Y_TITLE_OFFSET = 50;
 	const int SHIP_EACH_Y_OFFSET = 30;
 	shipNameYPos += SHIP_Y_TITLE_OFFSET;
@@ -802,22 +812,12 @@ void Application::lobbyRender()
 	}
 
 	// Render the Room Title
-	int roomYPos = screenheight * 0.3f;
 	font_->SetScale(1.5f);
-	font_->printf(screenwidth * 0.2f, roomYPos, HGETEXT_LEFT, "%s",
-		"Rooms List");
+	font_->printf(screenwidth * 0.2f, roomHeaderYPos, HGETEXT_LEFT, "%s", "Rooms List");
 	// Renders the list of rooms
-	const int ROOM_Y_TITLE_OFFSET = 50;
-	const int ROOM_EACH_Y_OFFSET = 30;
-	roomYPos += ROOM_Y_TITLE_OFFSET;
-	font_->SetScale(1.0f);
-	for (auto room : roomsList)
+	for (auto bt : roomButtons)
 	{
-		// Render the name of a room
-		font_->printf(screenwidth * 0.2f, roomYPos, HGETEXT_LEFT, "%s",
-			room.GetName().c_str());
-
-		roomYPos += ROOM_EACH_Y_OFFSET;
+		bt.Render();
 	}
 }
 
@@ -860,6 +860,23 @@ void Application::gameRender()
 	{
 		missile->Render();
 	}
+}
+
+void Application::createRoomButton(Room* rm)
+{
+	// Don't allow production of more buttons than there are rooms
+	if (roomButtons.size() >= roomsList.size())
+	{
+		return;
+	}
+
+	float screenwidth = static_cast<float>(hge_->System_GetState(HGE_SCREENWIDTH));
+	float screenheight = static_cast<float>(hge_->System_GetState(HGE_SCREENHEIGHT));
+
+	RoomButton bt;
+
+	bt.Init(rm, sprites_[ST_BUTTON], font_, screenwidth * 0.2f + 125, roomHeaderYPos + 10 + (roomButtons.size() + 1) * 55, 250, 50);
+	roomButtons.push_back(bt);
 }
 
 /** 

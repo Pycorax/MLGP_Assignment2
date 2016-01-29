@@ -53,7 +53,10 @@ void Button::Render(void) const
 	// Render the button
 	sprite->RenderStretch(positionX - scaleX * 0.5f, positionY - scaleY * 0.5f, positionX + scaleX * 0.5f, positionY + scaleY * 0.5f);
 	// Render the button text
-	font->printf(positionX, positionY, HGETEXT_CENTER, "%s", buttonText.c_str());
+	font->SetScale(1.0f);
+	font->SetColor(ARGB(255, 0, 0, 0));
+;	font->printf(positionX, positionY - 10.0f, HGETEXT_CENTER, "%s", buttonText.c_str());
+	font->SetColor(ARGB(255, 255, 255, 255));
 }
 
 bool Button::GetState(void) const

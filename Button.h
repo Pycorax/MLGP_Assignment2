@@ -15,6 +15,7 @@ using std::string;
 
 class Button
 {
+protected:
 	// Position and Scale
 	int positionX;
 	int positionY;

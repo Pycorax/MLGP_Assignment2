@@ -5,6 +5,7 @@
 #include "missile.h"
 #include <vector>
 #include "Button.h"
+#include "RoomButton.h"
 #include "MovementServer\Room.h"
 
 class HGE;
@@ -39,6 +40,7 @@ class Application
 	{
 		TT_BG,
 		TT_BOOM,
+		TT_BUTTON,
 		TT_TOTAL
 	};
 
@@ -46,12 +48,14 @@ class Application
 	{
 		ST_BG,
 		ST_BOOM,
+		ST_BUTTON,
 		ST_TOTAL
 	};
 
 	enum BUTTON_TYPE
 	{
 		BT_START,
+		BT_NEWROOM,
 		BT_TOTAL
 	};
 
@@ -71,6 +75,13 @@ class Application
 	unsigned int timer_;
 	const int TICK_RATE = 24;
 	const int NETWORK_UPDATE_DELTA = 1000 / TICK_RATE;
+
+	/*
+	 * Lobby Render Positioning
+	 */
+	static const int ROOM_Y_TITLE_OFFSET = 50;
+	static const int ROOM_EACH_Y_OFFSET = 30;
+	int roomHeaderYPos;
 
 	/*
 	 * Input
@@ -96,6 +107,7 @@ class Application
 
 	// Buttons
 	Button buttons[BT_TOTAL];
+	vector<RoomButton> roomButtons;
 
 	// App Lifetime
 	bool Init();
@@ -117,6 +129,9 @@ class Application
 	void lobbyRender();
 	bool newRoomRender();
 	void gameRender();
+
+	// Rooms
+	void createRoomButton(Room* rm);
 
 	// Others
 	bool updateInputBuffer(int maxBufferLength);
