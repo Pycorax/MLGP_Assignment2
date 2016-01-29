@@ -946,16 +946,39 @@ bool Application::newRoomRender()
 
 void Application::gameRender()
 {
-	ShipList::iterator itr;
-	for (itr = ships_.begin(); itr != ships_.end(); itr++)
+	auto shipsInRoom = currentRoom->GetConnectedIDs();
+	for (auto ship : ships_)
 	{
-		(*itr)->Render();
+		// Check if this ship is in the room
+		for (auto s : shipsInRoom)
+		{
+			if (ship->GetID() == s)
+			{
+				ship->Render();
+				break;
+			}
+		}
 	}
 
 	// Lab 13 Task 6 : Render the missile
 	if (mymissile)
 	{
 		mymissile->Render();
+	}
+	
+	// Render Missiles
+	for (auto missile : missiles_)
+	{
+		// Check if this missile is in this room
+		bool missileIsInRoom = false;
+		for (auto s : shipsInRoom)
+		{
+			if (missile->GetOwnerID() == s)
+			{
+				missile->Render();
+				break;
+			}
+		}
 	}
 
 	// Lab 13 Task 12 : Render network missiles
