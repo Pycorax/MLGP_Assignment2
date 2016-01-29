@@ -72,7 +72,7 @@ bool ServerApp::userIsInARoom(int userID)
 
 Room* ServerApp::findRoom(int roomID)
 {
-	for (auto room : rooms_)
+	for (auto& room : rooms_)
 	{
 		if (room.GetID() == roomID)
 		{
