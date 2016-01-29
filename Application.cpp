@@ -534,28 +534,30 @@ int Application::HandlePackets(Packet * packet)
 
 bool Application::joinUpdate()
 {
-	static bool connected = false;
+	static bool connecting = false;
+	static string shipNameSaved = "";
 
-	if (updateInputBuffer(Ship::MAX_NAME_LENGTH))
+	if (!connecting && updateInputBuffer(Ship::MAX_NAME_LENGTH))
 	{
-		// Reset the input buffer
-		inputBuffer = "";
-
-		// Connect to the server
-		if (!connected)
+		// Only continue if there is a name specified
+		if (inputBuffer.length() > 0)
 		{
-			if (rakpeer_->Connect("127.0.0.1", 1691, 0, 0))
+			// Save the ship name
+			shipNameSaved = inputBuffer;
+
+			// Reset the input buffer
+			inputBuffer = "";
+
+			// Connect to the server
+			if (!connecting && rakpeer_->Connect("127.0.0.1", 1691, 0, 0))
 			{
-				// Initialize ships
-				ships_.push_back(new Ship(rand() % 4 + 1, rand() % 500 + 100, rand() % 400 + 100));
-				ships_.at(0)->SetName(inputBuffer.c_str());
-				connected = true;
+				connecting = true;
+				notifyMessage = "Attempting to connect...";
 			}
-			else
-			{
-				// Inform the user that we can't connect
-				notifyMessage = "Unable to connect to server!";
-			}
+		}
+		else
+		{
+			notifyMessage = "Please enter a ship name...";
 		}
 	}
 
@@ -570,10 +572,21 @@ bool Application::joinUpdate()
 		case ID_SERVER_FULL:
 			// Inform the user of the issue
 			notifyMessage = "Server is FULL!";
-			connected = false;
+			connecting = false;
 			break;
 		case ID_DISCONNECTION_NOTIFICATION:
-			connected = false;
+			connecting = false;
+			break;
+		case ID_CONNECTION_REQUEST_ACCEPTED:
+			// Initialize ships
+			ships_.push_back(new Ship(rand() % 4 + 1, rand() % 500 + 100, rand() % 400 + 100));
+			ships_.at(0)->SetName(shipNameSaved.c_str());
+			connecting = false;
+			break;
+		case ID_CONNECTION_ATTEMPT_FAILED:
+			connecting = false;
+			// Inform the user that we can't connect
+			notifyMessage = "Unable to connect to server!";
 			break;
 	}
 
@@ -747,7 +760,7 @@ void Application::joinRender()
 	{
 		font_->SetColor(ARGB(255, 255, 0, 0));
 		font_->SetScale(0.8f);
-		font_->printf(screenwidth * 0.5f, screenheight * 0.9f, HGETEXT_CENTER, "Error: %s", notifyMessage.c_str());
+		font_->printf(screenwidth * 0.5f, screenheight * 0.9f, HGETEXT_CENTER, "%s", notifyMessage.c_str());
 		font_->SetColor(ARGB(255, 255, 255, 255));
 	}
 }
