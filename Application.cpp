@@ -787,7 +787,7 @@ bool Application::gameUpdate()
 		// Check collisions with ships
 		if (ship == ships_.at(0))
 		{
-			checkCollisions(ship);
+			checkCollisions(ship, roomShips);
 		}
 	}
 
@@ -1136,15 +1136,19 @@ bool Application::updateInputBuffer(int maxBufferLength)
 	return false;
 }
 
-bool Application::checkCollisions(Ship* ship)
+bool Application::checkCollisions(Ship* ship, ShipList shipsToCheckWith)
 {
-	for (std::vector<Ship*>::iterator thisship = ships_.begin();
-		thisship != ships_.end(); thisship++)
+	for (auto& thisship = shipsToCheckWith.begin(); thisship != shipsToCheckWith.end(); thisship++)
 	{
-		if( (*thisship) == ship ) continue;	//skip if it is the same ship
+		if ((*thisship) == ship)
+		{
+			//skip if it is the same ship
+			continue;
+		}	
 
 		if( ship->HasCollided( (*thisship) ) )
 		{
+			// Collision Check
 			if( (*thisship)->CanCollide( RakNet::GetTime() ) &&  ship->CanCollide( RakNet::GetTime() ) )
 			{
 				std::cout << "collide!" << std::endl;

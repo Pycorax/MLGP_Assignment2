@@ -143,7 +143,7 @@ class Application
 
 	// Others
 	bool updateInputBuffer(int maxBufferLength);
-	bool checkCollisions(Ship* ship);
+	bool checkCollisions(Ship* ship, ShipList shipsToCheckWith);
 	bool SendInitialPosition();
 
 	// Missile Functions
