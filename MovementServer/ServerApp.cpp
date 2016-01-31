@@ -396,6 +396,13 @@ void ServerApp::SendWelcomePackage(SystemAddress& addr)
 		bs.Write( itr->second.type_ );
 	}
 
+	// Send Goals
+	// -- Inform number of goals
+	bs.Write(2);
+	// -- Send the goals
+	leftGoal.SendObject(&bs, ID_WELCOME);
+	rightGoal.SendObject(&bs, ID_WELCOME);
+
 	// Send list of rooms and members
 	// -- Send the number of rooms so that the client knows what to expect
 	bs.Write(rooms_.size());

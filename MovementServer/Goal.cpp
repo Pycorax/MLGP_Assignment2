@@ -20,7 +20,7 @@ Goal::~Goal()
 {
 }
 
-void Goal::Init(int id, int startPosX, int startPosY, int endPosY, float speed, int scaleX, int scaleY)
+void Goal::Init(int id, float startPosX, float startPosY, float endPosY, float speed, float scaleX, float scaleY)
 {
 	m_goalID = id;
 	m_posX = startPosX;
@@ -66,6 +66,26 @@ void Goal::Update(double dt)
 	}
 }
 
+float Goal::GetPosX(void) const
+{
+	return m_posX;
+}
+
+float Goal::GetPosY(void) const
+{
+	return m_posY;
+}
+
+float Goal::GetScaleX(void) const
+{
+	return m_scaleX;
+}
+
+float Goal::GetScaleY(void) const
+{
+	return m_scaleY;
+}
+
 void Goal::SendObject(RakPeerInterface * peer, MyMsgIDs type) const
 {
 	RakNet::BitStream bs;
@@ -75,6 +95,20 @@ void Goal::SendObject(RakPeerInterface * peer, MyMsgIDs type) const
 
 	switch (type)
 	{
+		case ID_WELCOME:
+		{
+			bs.Write(m_goalID);
+			bs.Write(m_posX);
+			bs.Write(m_posY);
+			bs.Write(m_startPosY);
+			bs.Write(m_endPosY);
+			bs.Write(m_scaleX);
+			bs.Write(m_scaleY);
+			bs.Write(m_speed);
+			bs.Write(m_forward);
+			break;
+		}
+
 		case ID_UPDATEGOAL:
 		{
 			bs.Write(m_goalID);
@@ -92,10 +126,44 @@ void Goal::SendObject(RakPeerInterface * peer, MyMsgIDs type) const
 	peer->Send(&bs, HIGH_PRIORITY, RELIABLE, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
 }
 
+void Goal::SendObject(RakNet::BitStream * bs, MyMsgIDs type) const
+{
+	switch (type)
+	{
+		case ID_WELCOME:
+		{
+			bs->Write(m_goalID);
+			bs->Write(m_posX);
+			bs->Write(m_posY);
+			bs->Write(m_startPosY);
+			bs->Write(m_endPosY);
+			bs->Write(m_scaleX);
+			bs->Write(m_scaleY);
+			bs->Write(m_speed);
+			bs->Write(m_forward);
+			break;
+		}
+	}
+}
+
 void Goal::RecvObject(RakNet::BitStream * bs, MyMsgIDs type)
 {
 	switch (type)
 	{
+		case ID_WELCOME:
+		{
+			bs->Read(m_goalID);
+			bs->Read(m_posX);
+			bs->Read(m_posY);
+			bs->Read(m_startPosY);
+			bs->Read(m_endPosY);
+			bs->Read(m_scaleX);
+			bs->Read(m_scaleY);
+			bs->Read(m_speed);
+			bs->Read(m_forward);
+			break;
+		}
+
 		case ID_UPDATEGOAL:
 		{
 			int goalID = -1;

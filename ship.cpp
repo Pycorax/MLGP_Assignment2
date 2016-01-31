@@ -341,6 +341,10 @@ void Ship::SendObject(RakPeerInterface * peer, MyMsgIDs type) const
 	peer->Send(&bs, HIGH_PRIORITY, RELIABLE, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
 }
 
+void Ship::SendObject(RakNet::BitStream * bs, MyMsgIDs type) const
+{
+}
+
 void Ship::RecvObject(RakNet::BitStream * bs, MyMsgIDs type)
 {
 	switch (type)

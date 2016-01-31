@@ -1,14 +1,22 @@
 #pragma once
 
-// Other Includes
-#include "../INetworkProcessable.h"
+// Inheritance Include
+#include "INetworkProcessable.h"
 
-/*
- * A simple goal that moves from top to bottom
- */
-class Goal : public INetworkProcessable
+// API Include
+#include <hge.h>
+#include <hgerect.h>
+
+class hgeSprite;
+
+class ClientGoal : public INetworkProcessable
 {
-protected:
+
+	// HGE
+	HTEXTURE tex_; //!< Handle to the sprite's texture
+	hgeSprite* sprite_; //!< The sprite used to display the ship
+	hgeRect collidebox;
+
 	// ID used to identify the goal
 	int m_goalID;
 
@@ -27,13 +35,17 @@ protected:
 	// Stores the current direction
 	bool m_forward;
 
-public:
-	Goal();
-	virtual ~Goal();
 
-	// Lifetime
-	void Init(int id, float startPosX, float startPosY, float endPosY, float speed, float scaleX, float scaleY);
+public:
+	ClientGoal();
+	~ClientGoal();
+
+	void Init(hgeSprite* sprite, int id, float startPosX, float startPosY, float endPosY, float speed, float scaleX, float scaleY);
+	void Render();
 	void Update(double dt);
+
+	// Setters
+	void SetSprite(hgeSprite* sprite);
 
 	// Getters
 	float GetPosX(void) const;

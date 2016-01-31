@@ -131,6 +131,10 @@ void Missile::SendObject(RakPeerInterface * peer, MyMsgIDs type) const
 	peer->Send(&bs, HIGH_PRIORITY, UNRELIABLE_SEQUENCED, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
 }
 
+void Missile::SendObject(RakNet::BitStream * bs, MyMsgIDs type) const
+{
+}
+
 void Missile::RecvObject(RakNet::BitStream* bs, MyMsgIDs type)
 {
 	char _deleted;

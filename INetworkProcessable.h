@@ -11,5 +11,6 @@ public:
 	virtual ~INetworkProcessable() {}
 
 	virtual void SendObject(RakPeerInterface* peer, MyMsgIDs type) const = 0;
+	virtual void SendObject(RakNet::BitStream* bs, MyMsgIDs type) const = 0;
 	virtual void RecvObject(RakNet::BitStream* bs, MyMsgIDs type) = 0;
 };

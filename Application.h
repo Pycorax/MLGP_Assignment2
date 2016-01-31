@@ -7,6 +7,7 @@
 #include "Button.h"
 #include "RoomButton.h"
 #include "MovementServer\Room.h"
+#include "ClientGoal.h"
 
 class HGE;
 class hgeFont;
@@ -104,6 +105,9 @@ class Application
 	bool keydown_enter;
 	typedef std::vector<Missile*> MissileList;
 	MissileList missiles_;
+
+	// Goal
+	vector<ClientGoal*> goalList;
 
 	// Rooms
 	Room* currentRoom;			// Stores a pointer to the current room we are in. If nullptr, means is in lobby

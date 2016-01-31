@@ -345,9 +345,19 @@ int Application::HandlePackets(Packet * packet)
 				ships_.push_back(ship);
 			}
 
-			
+			// Receive goal data
+			// -- Define variables for reading
+			int numGoals = 0;
+			// -- Receive number of goals
+			bs.Read(numGoals);
+			for (int i = 0; i < numGoals; ++i)
+			{
+				goalList.push_back(new ClientGoal);
+				goalList.back()->RecvObject(&bs, ID_WELCOME);
+			}
+
 			// Receive rooms data
-			// - Define variables for reading
+			// -- Define variables for reading
 			char roomName[Room::MAX_ROOM_NAME_LENGTH];
 			int roomID = -1;
 			int numShips = 0;
