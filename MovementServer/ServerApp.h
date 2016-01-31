@@ -1,13 +1,20 @@
 #ifndef SERVERAPP_H_
 #define SERVERAPP_H_
 
-#include "RakNetTypes.h"
+// STL Includes
 #include <map>
 #include <vector>
 #include <string>
+
+// API Includes
+#include "RakNetTypes.h"
+
+// Other Includes
 #include "Room.h"
 #include "Console.h"
+#include "Goal.h"
 
+// Using Directives
 using std::string;
 using std::vector;
 
@@ -55,6 +62,10 @@ private:
 	ClientMap clients_;				// Stores all the clients
 	Room lobby;						// Stores references to clients in the lobby
 	vector<Room> rooms_;			// Stores references to clients in a room
+
+	// Goals. The same goals will be used for all rooms.
+	Goal LeftGoal;
+	Goal RightGoal;
 
 	// Handle to the Console
 	Console* console;
