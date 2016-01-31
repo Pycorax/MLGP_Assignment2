@@ -96,7 +96,7 @@ class Application
 	// Ships
 	typedef std::vector<Ship*> ShipList;	//!< A list of ships
 	ShipList ships_;						//!< List of all the ships in the universe
-	vector<Room> roomsList;					// List of rooms
+	vector<Room*> roomsList;					// List of rooms
 	
 	// Missiles
 	Missile* mymissile;
@@ -139,6 +139,7 @@ class Application
 	void createRoomButton(Room* rm);
 	void joinRoom(int roomID);
 	Room* findRoom(int roomID);
+	Room * findRoomUserIsIn(int userID);
 
 	// Others
 	bool updateInputBuffer(int maxBufferLength);

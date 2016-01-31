@@ -203,15 +203,24 @@ bool Application::Loop()
 
 void Application::Shutdown()
 {
+	// Clear textures
 	for (size_t i = 0; i < TT_TOTAL; ++i)
 	{
 		hge_->Texture_Free(textures_[i]);
 	}
 
+	// Clear sprites
 	for (size_t i = 0; i < ST_TOTAL; ++i)
 	{
 		delete sprites_[i];
 		sprites_[i] = nullptr;
+	}
+
+	// Clear all rooms
+	while (roomsList.size() > 0)
+	{
+		delete roomsList.back();
+		roomsList.pop_back();
 	}
 
 	hge_->System_Shutdown();
@@ -340,6 +349,7 @@ int Application::HandlePackets(Packet * packet)
 			// Receive rooms data
 			// - Define variables for reading
 			char roomName[Room::MAX_ROOM_NAME_LENGTH];
+			int roomID = -1;
 			int numShips = 0;
 			int shipID = 0;
 			// -- Get number of rooms
@@ -352,9 +362,14 @@ int Application::HandlePackets(Packet * packet)
 				// Initialize each room
 				// -- Get the room name
 				bs.Read(roomName);
+				// -- Get the room ID
+				bs.Read(roomID);
 
 				// -- Create the room
-				roomsList.push_back(Room(roomName));
+				roomsList.push_back(new Room(roomName, roomID));
+
+				// -- Create a button for that room
+				createRoomButton(roomsList.at(i));
 
 				// -- Get the number of ships in this room
 				bs.Read(numShips);
@@ -366,7 +381,7 @@ int Application::HandlePackets(Packet * packet)
 					bs.Read(shipID);
 
 					// Add the ID in
-					roomsList.back().AddUser(shipID);
+					roomsList.back()->AddUser(shipID);
 				}
 
 				std::cout << "New Room: " << roomName << " with " << numShips << " players." << std::endl;
@@ -388,10 +403,10 @@ int Application::HandlePackets(Packet * packet)
 			bs.Read(roomID);
 
 			// Create the room
-			roomsList.push_back(Room(roomName, roomID));
+			roomsList.push_back(new Room(roomName, roomID));
 
 			// Create the button for the room
-			createRoomButton(&roomsList.back());
+			createRoomButton(roomsList.back());
 
 			std::cout << "New Room Created on Server: " << roomName << " #" << roomID << std::endl;
 		}
@@ -470,12 +485,21 @@ int Application::HandlePackets(Packet * packet)
 
 		case ID_LOSTSHIP:
 		{
+			// Remove the ship that was lost
 			unsigned int shipid;
 			bs.Read(shipid);
 			for (ShipList::iterator itr = ships_.begin(); itr != ships_.end(); ++itr)
 			{
 				if ((*itr)->GetID() == shipid)
 				{
+					// Remove the ship from any room it might be in
+					Room* roomUserIsIn = findRoomUserIsIn(shipid);
+					if (roomUserIsIn)
+					{
+						roomUserIsIn->RemoveUser(shipid);
+					}
+
+					// Remove the ship
 					delete *itr;
 					ships_.erase(itr);
 					break;
@@ -1024,9 +1048,30 @@ Room * Application::findRoom(int roomID)
 {
 	for (auto& room : roomsList)
 	{
-		if (room.GetID() == roomID)
+		if (room->GetID() == roomID)
 		{
-			return &room;
+			return room;
+		}
+	}
+
+	return nullptr;
+}
+
+Room * Application::findRoomUserIsIn(int userID)
+{
+	for (auto& room : roomsList)
+	{
+		// Get the list of people connected to this room
+		auto participants = room->GetConnectedIDs();
+		// Find the user
+		for (auto id : participants)
+		{
+			// We found the user
+			if (userID == id)
+			{
+				// This is his room
+				return room;
+			}
 		}
 	}
 

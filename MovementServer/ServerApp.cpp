@@ -80,6 +80,27 @@ bool ServerApp::userIsInARoom(int userID)
 	return true;
 }
 
+Room * ServerApp::findRoomUserIsIn(int userID)
+{
+	for (auto& room : rooms_)
+	{
+		// Get the list of people connected to this room
+		auto participants = room.GetConnectedIDs();
+		// Find the user
+		for (auto id : participants)
+		{
+			// We found the user
+			if (userID == id)
+			{
+				// This is his room
+				return &room;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
 Room* ServerApp::findRoom(int roomID)
 {
 	for (auto& room : rooms_)
@@ -145,7 +166,22 @@ void ServerApp::PacketHandlerLoop()
 
 		case ID_DISCONNECTION_NOTIFICATION:
 		case ID_CONNECTION_LOST:
-			SendDisconnectionNotification(packet->systemAddress);
+			{
+				// Remove this player from the rooms
+				int userID = clients_.at(packet->systemAddress).id;
+				Room* userRoom = findRoomUserIsIn(userID);
+				if (userRoom != nullptr)
+				{
+					userRoom->RemoveUser(userID);
+				}
+				else // Player is not in room, remove him from lobby
+				{
+					lobby.RemoveUser(userID);
+				}
+
+				// Notify everyone else
+				SendDisconnectionNotification(packet->systemAddress);
+			}
 			break;
 
 		case ID_INITIALPOS:
@@ -197,6 +233,9 @@ void ServerApp::PacketHandlerLoop()
 						NotifyUserJoinedRoom(packet->systemAddress, roomID);
 						// Print on Server
 						console->Print("User #" + to_string(userID) + " has joined room #" + to_string(roomID) + ": " + rm->GetName() + "!\n");
+
+						// Now we remove him from the lobby
+						lobby.RemoveUser(roomID);
 					}
 					else
 					{
@@ -288,18 +327,6 @@ void ServerApp::ConsoleLoop()
 			}
 		}
 		break;
-
-		case ConsoleCommand::C_TOTAL:
-		{
-			console->Print("\\Unrecognized command.\n");
-		}
-		break;
-
-		default:
-		{
-			console->Print("\\Unimplemented command.\n");
-		}
-		break;
 	}
 }
 
@@ -333,8 +360,11 @@ void ServerApp::SendWelcomePackage(SystemAddress& addr)
 	// -- Send each room
 	for (auto room : rooms_)
 	{
-		// Send the room name
+		// Send details of the room
+		// --Send the room name
 		bs.Write(room.GetName().c_str());
+		// -- Send the room ID
+		bs.Write(room.GetID());
 
 		// Get the list of users
 		auto connectedIDs = room.GetConnectedIDs();

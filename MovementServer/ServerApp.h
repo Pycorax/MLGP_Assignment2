@@ -75,6 +75,9 @@ private:
 	// Rooms Helper Functions
 	// -- Function to check if the user is in a room
 	bool userIsInARoom(int userID);
+	// -- Function to find the room that a user is in
+	Room* findRoomUserIsIn(int userID);
+	// -- Get pointer to a room via the ID
 	Room* findRoom(int roomID);
 
 public:
