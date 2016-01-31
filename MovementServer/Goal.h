@@ -36,6 +36,7 @@ public:
 	void Update(double dt);
 
 	// Getters
+	int GetID(void) const;
 	float GetPosX(void) const;
 	float GetPosY(void) const;
 	float GetScaleX(void) const;

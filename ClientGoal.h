@@ -11,7 +11,6 @@ class hgeSprite;
 
 class ClientGoal : public INetworkProcessable
 {
-
 	// HGE
 	HTEXTURE tex_; //!< Handle to the sprite's texture
 	hgeSprite* sprite_; //!< The sprite used to display the ship
@@ -48,6 +47,7 @@ public:
 	void SetSprite(hgeSprite* sprite);
 
 	// Getters
+	int GetID(void) const;
 	float GetPosX(void) const;
 	float GetPosY(void) const;
 	float GetScaleX(void) const;

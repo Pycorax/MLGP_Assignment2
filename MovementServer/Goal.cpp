@@ -30,14 +30,17 @@ void Goal::Init(int id, float startPosX, float startPosY, float endPosY, float s
 	{
 		m_endPosY = startPosY;
 		m_startPosY = endPosY;
+		m_forward = false;
 	}
 	else
 	{
 		m_startPosY = startPosY;
 		m_endPosY = endPosY;
+		m_forward = true;
 	}
 
-	m_posY = m_startPosY;
+	m_posY = startPosY;
+	m_speed = speed;
 	m_scaleX = scaleX;
 	m_scaleY = scaleY;
 }
@@ -56,14 +59,19 @@ void Goal::Update(double dt)
 	}
 	else
 	{
-		m_posY += m_speed * dt;
+		m_posY -= m_speed * dt;
 
 		if (m_posY < m_startPosY)
 		{
 			m_posY = m_startPosY;
-			m_forward = false;
+			m_forward = true;
 		}
 	}
+}
+
+int Goal::GetID(void) const
+{
+	return m_goalID;
 }
 
 float Goal::GetPosX(void) const
@@ -166,26 +174,13 @@ void Goal::RecvObject(RakNet::BitStream * bs, MyMsgIDs type)
 
 		case ID_UPDATEGOAL:
 		{
-			int goalID = -1;
-			bs->Read(goalID);
-
-			// If we are the correct recipient
-			if (goalID == m_goalID)
-			{
-				// Update ourselves with these values
-				bs->Read(m_posX);
-				bs->Read(m_posY);
-				bs->Read(m_scaleX);
-				bs->Read(m_scaleY);
-				bs->Read(m_speed);
-				bs->Read(m_forward);
-			}
-			else
-			{
-				// Reset this, let someone else handle it
-				bs->ResetReadPointer();
-			}
-
+			// Update ourselves with these values
+			bs->Read(m_posX);
+			bs->Read(m_posY);
+			bs->Read(m_scaleX);
+			bs->Read(m_scaleY);
+			bs->Read(m_speed);
+			bs->Read(m_forward);
 			break;
 		}
 	}

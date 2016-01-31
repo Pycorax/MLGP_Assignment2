@@ -131,7 +131,7 @@ ServerApp::ServerApp(float packetHandlerDelay, float consoleDelay, float gameDel
 
 	// Initialize Goals
 	leftGoal.Init(0, 0, 0, 400, 100, 50, 200);
-	rightGoal.Init(0, 750, 400, 0, 100, 50, 200);
+	rightGoal.Init(1, 750, 400, 0, 100, 50, 200);
 
 	// Initialize the Timer
 	oldTime = RakNet::GetTime();
@@ -350,7 +350,7 @@ void ServerApp::GameLoop()
 {
 	// Calculate Delta Time
 	float currentTime = RakNet::GetTime();
-	float dt = currentTime - oldTime;
+	float dt = (currentTime - oldTime) / 1000;
 	oldTime = currentTime;
 
 	// Update the Goals

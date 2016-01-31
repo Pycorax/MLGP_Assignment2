@@ -38,6 +38,7 @@ void ClientGoal::Init(hgeSprite * sprite, int id, float startPosX, float startPo
 	}
 
 	m_posY = m_startPosY;
+	m_speed = speed;
 	m_scaleX = scaleX;
 	m_scaleY = scaleY;
 
@@ -46,7 +47,7 @@ void ClientGoal::Init(hgeSprite * sprite, int id, float startPosX, float startPo
 
 void ClientGoal::Render()
 {
-	sprite_->RenderStretch(m_posX - m_scaleX * 0.5f, m_posY - m_scaleY * 0.5f, m_posX + m_scaleX * 0.5f, m_posY + m_scaleY * 0.5f);
+	sprite_->RenderStretch(m_posX, m_posY, m_posX + m_scaleX, m_posY + m_scaleY);
 }
 
 void ClientGoal::Update(double dt)
@@ -63,12 +64,12 @@ void ClientGoal::Update(double dt)
 	}
 	else
 	{
-		m_posY += m_speed * dt;
+		m_posY -= m_speed * dt;
 
 		if (m_posY < m_startPosY)
 		{
 			m_posY = m_startPosY;
-			m_forward = false;
+			m_forward = true;
 		}
 	}
 }
@@ -76,6 +77,11 @@ void ClientGoal::Update(double dt)
 void ClientGoal::SetSprite(hgeSprite * sprite)
 {
 	sprite_ = sprite;
+}
+
+int ClientGoal::GetID(void) const
+{
+	return m_goalID;
 }
 
 float ClientGoal::GetPosX(void) const
@@ -146,27 +152,21 @@ void ClientGoal::RecvObject(RakNet::BitStream * bs, MyMsgIDs type)
 {
 	switch (type)
 	{
-	case ID_WELCOME:
-	{
-		bs->Read(m_goalID);
-		bs->Read(m_posX);
-		bs->Read(m_posY);
-		bs->Read(m_startPosY);
-		bs->Read(m_endPosY);
-		bs->Read(m_scaleX);
-		bs->Read(m_scaleY);
-		bs->Read(m_speed);
-		bs->Read(m_forward);
-		break;
-	}
+		case ID_WELCOME:
+		{
+			bs->Read(m_goalID);
+			bs->Read(m_posX);
+			bs->Read(m_posY);
+			bs->Read(m_startPosY);
+			bs->Read(m_endPosY);
+			bs->Read(m_scaleX);
+			bs->Read(m_scaleY);
+			bs->Read(m_speed);
+			bs->Read(m_forward);
+			break;
+		}
 
-	case ID_UPDATEGOAL:
-	{
-		int goalID = -1;
-		bs->Read(goalID);
-
-		// If we are the correct recipient
-		if (goalID == m_goalID)
+		case ID_UPDATEGOAL:
 		{
 			// Update ourselves with these values
 			bs->Read(m_posX);
@@ -175,15 +175,8 @@ void ClientGoal::RecvObject(RakNet::BitStream * bs, MyMsgIDs type)
 			bs->Read(m_scaleY);
 			bs->Read(m_speed);
 			bs->Read(m_forward);
+			break;
 		}
-		else
-		{
-			// Reset this, let someone else handle it
-			bs->ResetReadPointer();
-		}
-
-		break;
-	}
 	}
 }
 

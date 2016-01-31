@@ -89,6 +89,7 @@ bool Application::Init()
 		textures_[TT_BG] = hge_->Texture_Load("background.png");
 		textures_[TT_BOOM] = hge_->Texture_Load("boom.png");
 		textures_[TT_BUTTON] = hge_->Texture_Load("button.png");
+		textures_[TT_GOAL] = hge_->Texture_Load("goal.png");
 
 		// Load Sprites
 		sprites_[ST_BG] = new hgeSprite(textures_[TT_BG], 0, 0, screenwidth, screenheight);
@@ -97,6 +98,8 @@ bool Application::Init()
 		sprites_[ST_BOOM]->SetHotSpot(20, 20);
 		sprites_[ST_BUTTON] = new hgeSprite(textures_[TT_BUTTON], 0, 0, 250, 50);
 		sprites_[ST_BUTTON]->SetHotSpot(125, 25);
+		sprites_[ST_GOAL] = new hgeSprite(textures_[TT_GOAL], 0, 0, 50, 200);
+		sprites_[ST_GOAL]->SetHotSpot(25, 100);
 
 		// Load Fonts
 		font_ = new hgeFont("font1.fnt");
@@ -354,6 +357,7 @@ int Application::HandlePackets(Packet * packet)
 			{
 				goalList.push_back(new ClientGoal);
 				goalList.back()->RecvObject(&bs, ID_WELCOME);
+				goalList.back()->SetSprite(sprites_[ST_GOAL]);
 			}
 
 			// Receive rooms data
@@ -609,6 +613,23 @@ int Application::HandlePackets(Packet * packet)
 		}
 		break;
 
+		case ID_UPDATEGOAL:
+		{
+			int goalID = -1;
+			bs.Read(goalID);
+
+			for (auto goal : goalList)
+			{
+				// If we are the correct recipient
+				if (goalID == goal->GetID())
+				{
+					goal->RecvObject(&bs, ID_UPDATEGOAL);
+					break;
+				}
+			}
+		}
+		break;
+
 #pragma endregion
 
 		default:
@@ -853,6 +874,12 @@ bool Application::gameUpdate()
 		}
 	}
 
+	// Update the Goals
+	for (auto goal : goalList)
+	{
+		goal->Update(timedelta);
+	}
+
 	// Handle the Packets that are received
 	HandlePackets(rakpeer_->Receive());
 
@@ -994,13 +1021,13 @@ void Application::gameRender()
 		}
 	}
 
-	// Lab 13 Task 6 : Render the missile
+	// Render my missile
 	if (mymissile)
 	{
 		mymissile->Render();
 	}
 	
-	// Render Missiles
+	// Render other Missiles
 	for (auto missile : missiles_)
 	{
 		// Check if this missile is in this room
@@ -1019,6 +1046,12 @@ void Application::gameRender()
 	for (auto missile : missiles_)
 	{
 		missile->Render();
+	}
+
+	// Render the Goals
+	for (auto goal : goalList)
+	{
+		goal->Render();
 	}
 }
 

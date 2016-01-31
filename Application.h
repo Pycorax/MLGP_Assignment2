@@ -42,6 +42,7 @@ class Application
 		TT_BG,
 		TT_BOOM,
 		TT_BUTTON,
+		TT_GOAL,
 		TT_TOTAL
 	};
 
@@ -50,6 +51,7 @@ class Application
 		ST_BG,
 		ST_BOOM,
 		ST_BUTTON,
+		ST_GOAL,
 		ST_TOTAL
 	};
 
