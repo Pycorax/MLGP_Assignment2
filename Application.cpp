@@ -794,7 +794,7 @@ bool Application::gameUpdate()
 	// Update my missile
 	if (mymissile)
 	{
-		if (Ship* collision = (mymissile)->Update(ships_, timedelta))
+		if (Ship* collision = (mymissile)->Update(roomShips, timedelta))
 		{
 			// Have collision
 			collision->Injure(mymissile->GetDamage());
