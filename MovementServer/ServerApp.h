@@ -53,8 +53,9 @@ private:
 	// Loop Delays (Prevent code from executing too fast)
 	float loopDelay[THREAD_TOTAL];
 
-	// Max Users
+	// User Handling
 	static const int MAX_CONNECTIONS = 10;
+	unsigned int newID;
 
 	// RakNet
 	RakPeerInterface* rakpeer_;
@@ -74,8 +75,9 @@ private:
 	// For Delta Time
 	double oldTime;
 
-	unsigned int newID;
-	
+	// Multi-Threading
+	CRITICAL_SECTION newRoomCSection;
+
 	void SendWelcomePackage(SystemAddress& addr);
 	void SendDisconnectionNotification(SystemAddress& addr);
 	void ProcessInitialPosition( SystemAddress& addr, string name, float x_, float y_, int type_);
@@ -87,7 +89,9 @@ private:
 	void NotifyNewRoomCreated();
 	void NotifyUserJoinedRoom(SystemAddress& userThatJoined, int roomJoined);
 
-	// Rooms Helper Functions
+	// Rooms Helper Functions   ---> In hindsight, I should've really put this into a RoomManager class but too late now
+	// -- Create a room
+	void createRoom(string roomName);
 	// -- Function to check if the user is in a room
 	bool userIsInARoom(int userID);
 	// -- Function to find the room that a user is in

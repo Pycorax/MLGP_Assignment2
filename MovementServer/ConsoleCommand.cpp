@@ -2,7 +2,9 @@
 
 const string ConsoleCommand::COMMAND_LIST[C_TOTAL] =
 {
-	"printrooms"
+	"printrooms",
+	"printgoals",
+	"newroom"
 };
 
 ConsoleCommand::ConsoleCommand()
@@ -56,7 +58,7 @@ ConsoleCommand ConsoleCommand::GetCommandFromString(string message)
 	string paramString;
 	try
 	{
-		paramString = message.substr(commandMsg.size() + 2 /*For the space between command and the params and the '/' at the start*/);
+		paramString = message.substr(commandMsg.size() + 1 /*For the space between command and the params*/);
 	}
 	catch (std::out_of_range e)
 	{
@@ -79,6 +81,18 @@ ConsoleCommand ConsoleCommand::GetCommandFromString(string message)
 
 	// Add the final token
 	result.params.push_back(paramString.substr(prevTokenIndex));
+
+	return result;
+}
+
+string ConsoleCommand::ConcatParamList(vector<string> params)
+{
+	string result;
+
+	for (auto param : params)
+	{
+		result += param;
+	}
 
 	return result;
 }

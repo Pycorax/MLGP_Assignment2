@@ -46,7 +46,7 @@ void ServerApp::NotifyNewRoomCreated()
 	// Broadcast to everyone that this new room has been created
 	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
 
-	console->Print("Created new room: " + rooms_.back().GetName() + " of ID #" + to_string(rooms_.back().GetID()) + "!" + to_string(static_cast<unsigned char>(ID_NEWROOM)) + "\n");
+	console->Print("Created new room: " + rooms_.back().GetName() + " of ID #" + to_string(rooms_.back().GetID()) + "!\n");
 }
 
 void ServerApp::NotifyUserJoinedRoom(SystemAddress & userThatJoined, int roomJoined)
@@ -63,6 +63,16 @@ void ServerApp::NotifyUserJoinedRoom(SystemAddress & userThatJoined, int roomJoi
 	bs.Write(roomJoined);
 	// Broadcast to everyone that this new room has been created
 	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
+}
+
+void ServerApp::createRoom(string roomName)
+{
+	EnterCriticalSection(&newRoomCSection);
+	// Create the room
+	rooms_.push_back(Room(roomName, rooms_.size()));
+	// Inform everyone of the new room
+	NotifyNewRoomCreated();
+	LeaveCriticalSection(&newRoomCSection);
 }
 
 bool ServerApp::userIsInARoom(int userID)
@@ -136,12 +146,19 @@ ServerApp::ServerApp(float packetHandlerDelay, float consoleDelay, float gameDel
 	// Initialize the Timer
 	oldTime = RakNet::GetTime();
 
+	// Initialize Critical Sections
+	InitializeCriticalSection(&newRoomCSection);
+
 	// Announce server start
 	console->Print("Server Started\n");
 }
 
 ServerApp::~ServerApp()
 {
+	// Destroy Critical Sections
+	DeleteCriticalSection(&newRoomCSection);
+
+	// Shut down RakNet
 	rakpeer_->Shutdown(100);
 	RakNetworkFactory::DestroyRakPeerInterface(rakpeer_);
 }
@@ -219,10 +236,7 @@ void ServerApp::PacketHandlerLoop()
 				char roomName[Room::MAX_ROOM_NAME_LENGTH];
 				bs.Read(roomName);
 				// Create the room
-				rooms_.push_back(Room(roomName, rooms_.size()));
-
-				// Inform everyone of the new room
-				NotifyNewRoomCreated();
+				createRoom(roomName);
 			}
 			break;
 
@@ -341,6 +355,22 @@ void ServerApp::ConsoleLoop()
 			{
 				console->Print("\\There are no rooms!\n");
 			}
+		}
+		break;
+
+		case ConsoleCommand::C_DEBUG_PRINT_GOALS:
+		{
+			console->Print("\\Goal Positions: \n");
+			console->Print("\\Left -> X:" + to_string(leftGoal.GetPosX()) + "  Y:" + to_string(leftGoal.GetPosY()) + "\n" +
+							"Right->X:" + to_string(rightGoal.GetPosX()) + "  Y : " + to_string(rightGoal.GetPosY()) + "\n");
+
+		}
+		break;
+
+		case ConsoleCommand::C_CREATE_ROOM:
+		{
+			string roomName = ConsoleCommand::ConcatParamList(cmd.params);
+			createRoom(roomName);
 		}
 		break;
 	}

@@ -14,6 +14,8 @@ public: // Types and Variables
 	enum COMMAND_TYPE
 	{
 		C_DEBUG_PRINT_ROOMS,
+		C_DEBUG_PRINT_GOALS,
+		C_CREATE_ROOM,
 		C_TOTAL
 	};
 
@@ -22,7 +24,7 @@ public: // Types and Variables
 
 	// Command properties
 	COMMAND_TYPE command;
-	std::vector<string> params;
+	vector<string> params;
 
 public:	// Functions
 	ConsoleCommand();
@@ -30,4 +32,5 @@ public:	// Functions
 
 	// Function to obtain a parsed command
 	static ConsoleCommand GetCommandFromString(string message);
+	static string ConcatParamList(vector<string> params);			// Function for concatenating a list of params into a single string
 };

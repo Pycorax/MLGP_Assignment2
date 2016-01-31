@@ -19,8 +19,9 @@ private:
 	vector<int> connectedIDs;		// Stores the IDs of the clients that are connected to this roomRoom(string _name = "") : name(_name) {}
 
 public:
-	Room(string _name = "", int _id = 0) : name(_name), id(_id)
+	Room(string _name = "", int _id = 0) : id(_id)
 	{
+		name = trim(_name, MAX_ROOM_NAME_LENGTH);
 	}
 
 	void AddUser(int userID)
@@ -77,6 +78,18 @@ private:
 		}
 
 		return false;
+	}
+
+	string trim(string str, int maxSize)
+	{
+		if (str.length() > maxSize)
+		{
+			return str.substr(0, maxSize);
+		}
+		else
+		{
+			return str;
+		}
 	}
 };
 
