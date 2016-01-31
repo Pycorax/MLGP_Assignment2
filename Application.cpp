@@ -399,7 +399,7 @@ int Application::HandlePackets(Packet * packet)
 
 		case ID_JOINROOM:
 		{
-			// Get the room name
+			// Get the user who joined
 			int userID;
 			bs.Read(userID);
 			// Get the room ID
@@ -889,7 +889,7 @@ void Application::lobbyRender()
 
 	// Renders the list of all players connected
 	// Render the Title
-	int shipNameYPos = screenheight * 0.15f;
+	int shipNameYPos = screenheight * 0.2f;
 	font_->SetColor(ARGB(255, 255, 255, 255));
 	font_->SetScale(1.5f);
 	font_->printf(screenwidth * 0.8f, shipNameYPos, HGETEXT_RIGHT, "%s",
