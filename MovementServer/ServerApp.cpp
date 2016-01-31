@@ -348,12 +348,27 @@ void ServerApp::ConsoleLoop()
 
 void ServerApp::GameLoop()
 {
+	// Calculate Delta Time
 	float currentTime = RakNet::GetTime();
-	float dt = oldTime - currentTime;
+	float dt = currentTime - oldTime;
 	oldTime = currentTime;
 
+	// Update the Goals
 	leftGoal.Update(dt);
 	rightGoal.Update(dt);
+
+	// Update Clients about the Goals
+	static float timeSinceLastUpdate = 0.0f;
+	static const float TIME_UPDATE_DELTA = 0.1f;
+	timeSinceLastUpdate += dt;
+	if (timeSinceLastUpdate > TIME_UPDATE_DELTA)
+	{
+		leftGoal.SendObject(rakpeer_, MyMsgIDs::ID_UPDATEGOAL);
+		rightGoal.SendObject(rakpeer_, MyMsgIDs::ID_UPDATEGOAL);
+
+		// Reset timer
+		timeSinceLastUpdate = 0.0f;
+	}
 
 	Sleep(loopDelay[THREAD_GAME]);
 }
