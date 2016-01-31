@@ -2,6 +2,7 @@
 
 // STL Includes
 #include <iostream>
+#include <conio.h>
 
 // API Includes
 #include "RakNetworkFactory.h"
@@ -260,7 +261,46 @@ void ServerApp::PacketHandlerLoop()
 
 void ServerApp::ConsoleLoop()
 {
-	console->Update();
+	if (GetAsyncKeyState(VK_OEM_3) & 0x8000)
+	{
+		console->StartInput();
+	}
+
+	ConsoleCommand cmd = console->Update();
+
+	switch (cmd.command)
+	{
+		case ConsoleCommand::C_DEBUG_PRINT_ROOMS:
+		{
+			bool hasRoom = false;
+
+			console->Print("\\List of Rooms: \n");
+			for (auto room : rooms_)
+			{
+				console->Print("\\#" + to_string(room.GetID()) + " -> " + room.GetName() + "(" + to_string(room.GetConnectedIDs().size()) + ")\n");
+				hasRoom = true;
+			}
+
+			// Say it's empty if it is
+			if (!hasRoom)
+			{
+				console->Print("\\There are no rooms!\n");
+			}
+		}
+		break;
+
+		case ConsoleCommand::C_TOTAL:
+		{
+			console->Print("\\Unrecognized command.\n");
+		}
+		break;
+
+		default:
+		{
+			console->Print("\\Unimplemented command.\n");
+		}
+		break;
+	}
 }
 
 void ServerApp::SendWelcomePackage(SystemAddress& addr)

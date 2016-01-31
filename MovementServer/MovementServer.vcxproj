@@ -88,12 +88,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ColorSystem.cpp" />
     <ClCompile Include="Console.cpp" />
+    <ClCompile Include="ConsoleCommand.cpp" />
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="ServerApp.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ColorSystem.h" />
     <ClInclude Include="Console.h" />
+    <ClInclude Include="ConsoleCommand.h" />
     <ClInclude Include="Room.h" />
     <ClInclude Include="ServerApp.h" />
   </ItemGroup>

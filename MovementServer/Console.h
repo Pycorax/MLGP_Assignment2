@@ -5,7 +5,11 @@
 #include <queue>
 
 // API Includes
+#define NOMINMAX
 #include <Windows.h>
+
+// Other Includes
+#include "ConsoleCommand.h"
 
 // Using Directives
 using std::string;
@@ -20,6 +24,10 @@ private:
 	bool m_available;
 	CRITICAL_SECTION m_printCSection;
 	CRITICAL_SECTION m_availCSection;
+	CRITICAL_SECTION m_inputCSection;
+
+	// Controls Input Mode
+	bool m_inputMode;
 
 	// Queue of Messages to Print
 	queue<string> m_printQueue;
@@ -28,9 +36,14 @@ public:
 	static Console* Instance();
 	~Console();
 
-	void Update(void);		// This will print strings that have been queued
+	ConsoleCommand Update(void);		// This will print strings that have been queued and process possible input
 
 	void Print(string str);
+	
+	// Input
+	void StartInput(void);
+	void StopInput(void);
+	bool GetInputMode(void);
 
 private:
 	Console();
@@ -40,6 +53,5 @@ private:
 	// Availability
 	void setAvailable(bool available);
 	bool getAvailable(void);
-
 };
 
