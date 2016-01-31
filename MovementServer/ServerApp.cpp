@@ -114,15 +114,20 @@ Room* ServerApp::findRoom(int roomID)
 	return nullptr;
 }
 
-ServerApp::ServerApp(float packetHandlerDelay) 
+ServerApp::ServerApp(float packetHandlerDelay, float consoleDelay) 
 	: rakpeer_(RakNetworkFactory::GetRakPeerInterface())
 	, newID(0)
 	, console(Console::Instance())
 {
+	// Set up RakNet
 	rakpeer_->Startup(100, 30, &SocketDescriptor(1691, 0), 1);
 	rakpeer_->SetMaximumIncomingConnections(MAX_CONNECTIONS);
 	rakpeer_->SetOccasionalPing(true);
+
+	// Set the delay for the threads
 	loopDelay[THREAD_PACKET_HANDLER] = packetHandlerDelay;
+	loopDelay[THREAD_CONSOLE] = consoleDelay;
+
 	console->Print("Server Started\n");
 }
 
@@ -300,6 +305,8 @@ void ServerApp::PacketHandlerLoop()
 
 void ServerApp::ConsoleLoop()
 {
+	Sleep(loopDelay[THREAD_CONSOLE]);
+
 	if (GetAsyncKeyState(VK_OEM_3) & 0x8000)
 	{
 		console->StartInput();

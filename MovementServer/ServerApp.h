@@ -81,7 +81,7 @@ private:
 	Room* findRoom(int roomID);
 
 public:
-	ServerApp(float packetHandlerDelay = 10.0f);
+	ServerApp(float packetHandlerDelay = 10.0f, float consoleDelay = 100.0f);
 	~ServerApp();
 
 	void PacketHandlerLoop();
