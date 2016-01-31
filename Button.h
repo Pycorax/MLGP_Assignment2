@@ -39,7 +39,7 @@ public:
 	~Button();
 
 	void Init(hgeSprite* sprite, hgeFont* font, int posX, int posY, int scaleX, int scaleY, string text = "");
-	void Update(int mousePosX, int mousePosY, bool leftClicked);
+	virtual void Update(int mousePosX, int mousePosY, bool leftClicked);
 	void Render(void) const;
 
 	bool GetState(void) const;

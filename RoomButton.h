@@ -15,7 +15,7 @@ public:
 	~RoomButton();
 
 	void Init(Room* rm, hgeSprite* sprite, hgeFont* font, int posX, int posY, int scaleX, int scaleY);
-	void UpdateText(void);
+	void Update(int mousePosX, int mousePosY, bool leftClicked) override;
 
 	int GetRoomID(void) const;
 };

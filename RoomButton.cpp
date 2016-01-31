@@ -19,11 +19,15 @@ void RoomButton::Init(Room* rm, hgeSprite * sprite, hgeFont * font, int posX, in
 {
 	room = rm;
 	Button::Init(sprite, font, posX, posY, scaleX, scaleY, "");
-	UpdateText();
+	Update(0, 0, false);
 }
 
-void RoomButton::UpdateText(void)
+void RoomButton::Update(int mousePosX, int mousePosY, bool leftClicked)
 {
+	// Update button status
+	Button::Update(mousePosX, mousePosY, leftClicked);
+
+	// Update the text
 	ostringstream oss;
 	oss << room->GetName() << " (" << room->GetConnectedIDs().size() << ")";
 	buttonText = oss.str();
