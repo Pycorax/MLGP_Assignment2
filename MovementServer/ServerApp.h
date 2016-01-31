@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include "Room.h"
+#include "Console.h"
 
 using std::string;
 using std::vector;
@@ -33,6 +34,7 @@ public:
 	enum THREAD_TYPE
 	{
 		THREAD_PACKET_HANDLER,
+		THREAD_CONSOLE,
 		THREAD_TOTAL
 	};
 
@@ -53,6 +55,9 @@ private:
 	ClientMap clients_;				// Stores all the clients
 	Room lobby;						// Stores references to clients in the lobby
 	vector<Room> rooms_;			// Stores references to clients in a room
+
+	// Handle to the Console
+	Console* console;
 
 	unsigned int newID;
 	
@@ -77,6 +82,7 @@ public:
 	~ServerApp();
 
 	void PacketHandlerLoop();
+	void ConsoleLoop();
 };
 
 #endif

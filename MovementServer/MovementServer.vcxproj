@@ -88,10 +88,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Console.cpp" />
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="ServerApp.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Console.h" />
     <ClInclude Include="Room.h" />
     <ClInclude Include="ServerApp.h" />
   </ItemGroup>

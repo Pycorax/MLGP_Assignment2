@@ -1,11 +1,20 @@
 #include "ServerApp.h"
+
+// STL Includes
+#include <iostream>
+
+// API Includes
 #include "RakNetworkFactory.h"
 #include "RakPeerInterface.h"
 #include "Bitstream.h"
 #include "GetTime.h"
 #include "../MyMsgIDs.h"
-#include <iostream>
+
+// Other Includes
 #include "../ship.h"
+
+// Using Directives
+using std::to_string;
 
 void ServerApp::NotifyServerFull(SystemAddress & addr)
 {
@@ -17,7 +26,7 @@ void ServerApp::NotifyServerFull(SystemAddress & addr)
 	// Broadcast to everyone that this new room has been created
 	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, addr, false);
 
-	std::cout << "User attemped to join full server!" << std::endl;
+	console->Print("User attemped to join full server!\n");
 }
 
 void ServerApp::NotifyNewRoomCreated()
@@ -36,7 +45,7 @@ void ServerApp::NotifyNewRoomCreated()
 	// Broadcast to everyone that this new room has been created
 	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
 
-	std::cout << "Created new room: " << rooms_.back().GetName() << " of ID #" << rooms_.back().GetID() << "!" << static_cast<unsigned char>(ID_NEWROOM) << std::endl;
+	console->Print("Created new room: " + rooms_.back().GetName() + " of ID #" + to_string(rooms_.back().GetID()) + "!" + to_string(static_cast<unsigned char>(ID_NEWROOM)) + "\n");
 }
 
 void ServerApp::NotifyUserJoinedRoom(SystemAddress & userThatJoined, int roomJoined)
@@ -86,12 +95,13 @@ Room* ServerApp::findRoom(int roomID)
 ServerApp::ServerApp(float packetHandlerDelay) 
 	: rakpeer_(RakNetworkFactory::GetRakPeerInterface())
 	, newID(0)
+	, console(Console::Instance())
 {
 	rakpeer_->Startup(100, 30, &SocketDescriptor(1691, 0), 1);
 	rakpeer_->SetMaximumIncomingConnections(MAX_CONNECTIONS);
 	rakpeer_->SetOccasionalPing(true);
 	loopDelay[THREAD_PACKET_HANDLER] = packetHandlerDelay;
-	std::cout << "Server Started" << std::endl;
+	console->Print("Server Started\n");
 }
 
 ServerApp::~ServerApp()
@@ -142,7 +152,7 @@ void ServerApp::PacketHandlerLoop()
 				float x_, y_;
 				int type_;
 				char name_[Ship::MAX_NAME_LENGTH];
-				std::cout << "ProcessInitialPosition" << std::endl;
+				console->Print("ProcessInitialPosition\n");
 				bs.Read(name_);
 				bs.Read( x_ );
 				bs.Read( y_ );
@@ -185,16 +195,16 @@ void ServerApp::PacketHandlerLoop()
 						// Notify the user that he has joined and everyone that someone has entered this room
 						NotifyUserJoinedRoom(packet->systemAddress, roomID);
 						// Print on Server
-						std::cout << "User #" << userID << " has joined room #" << roomID << ": " << rm->GetName() << "!" << std::endl;
+						console->Print("User #" + to_string(userID) + " has joined room #" + to_string(roomID) + ": " + rm->GetName() + "!\n");
 					}
 					else
 					{
-						std::cout << "User #" << userID << " tried to join non-existent room #" << roomID << std::endl;
+						console->Print("User #" + to_string(userID) + " tried to join non-existent room #" + to_string(roomID) + "!\n");
 					}
 				}
 				else
 				{
-					std::cout << "User #" << userID << " tried to join room #" << roomID << " while in a room." << std::endl;
+					console->Print("User #" + to_string(userID) + " tried to join room #" + to_string(roomID) + " while in a room.!\n");
 				}
 			}
 			break;
@@ -241,11 +251,16 @@ void ServerApp::PacketHandlerLoop()
 	#pragma endregion
 
 		default:
-			std::cout << "Unhandled Message Identifier: " << (int)msgid << std::endl;
+			console->Print("Unhandled Message Identifier: " + to_string((int)msgid) + "\n");
 		}
 
 		rakpeer_->DeallocatePacket(packet);
 	}
+}
+
+void ServerApp::ConsoleLoop()
+{
+	console->Update();
 }
 
 void ServerApp::SendWelcomePackage(SystemAddress& addr)
@@ -263,7 +278,7 @@ void ServerApp::SendWelcomePackage(SystemAddress& addr)
 	// Send list of ships
 	for (ClientMap::iterator itr = clients_.begin(); itr != clients_.end(); ++itr)
 	{
-		std::cout << "Ship " << itr->second.name << " (" << itr->second.id << ") pos" << itr->second.x_ << " " << itr->second.y_ << std::endl;
+		console->Print("Ship " + itr->second.name + " (" + to_string(itr->second.id) + ") pos" + to_string(itr->second.x_) + " " + to_string(itr->second.y_) + "\n");
 		bs.Write( itr->second.name.c_str());
 		bs.Write( itr->second.id );
 		bs.Write( itr->second.x_ );
@@ -302,7 +317,7 @@ void ServerApp::SendWelcomePackage(SystemAddress& addr)
 
 	clients_.insert(std::make_pair(addr, newobject));
 
-	std::cout << "New guy, assigned id " << newID << std::endl;
+	console->Print("New guy, assigned id " + to_string(newID) + "!\n");
 }
 
 void ServerApp::SendDisconnectionNotification(SystemAddress& addr)
@@ -318,7 +333,7 @@ void ServerApp::SendDisconnectionNotification(SystemAddress& addr)
 
 	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, addr, true);
 
-	std::cout << itr->second.id << " has left the game" << std::endl;
+	console->Print(to_string(itr->second.id) + " has left the game" + "!\n");
 
 	clients_.erase(itr);
 
@@ -337,9 +352,9 @@ void ServerApp::ProcessInitialPosition( SystemAddress& addr, string name_, float
 	itr->second.y_ = y_;
 	itr->second.type_ = type_;
 	
-	std::cout << "Player " << itr->second.name << " connected." << std::endl;
-	std::cout << "Received pos" << itr->second.x_ << " " << itr->second.y_ << std::endl;
-	std::cout << "Received type" << itr->second.type_ << std::endl;
+	console->Print("Player " + itr->second.name + " connected." + "\n");
+	console->Print("Received pos" + to_string(itr->second.x_) + " " + to_string(itr->second.y_) + "\n");
+	console->Print("Received type" + to_string(itr->second.type_) + "\n");
 
 	msgid = ID_NEWSHIP;
 	bs.Write(msgid);
