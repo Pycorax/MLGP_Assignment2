@@ -5,6 +5,7 @@ ServerApp* app;
 
 void PacketHandlerLoop(void);
 void ConsoleLoop(void);
+void GameLoop(void);
 
 int main()
 {
@@ -19,6 +20,7 @@ int main()
 	// Starting of Threads
 	threadHandle[ServerApp::THREAD_PACKET_HANDLER] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)PacketHandlerLoop, (LPVOID)NULL, 0, &ThreadID[ServerApp::THREAD_PACKET_HANDLER]);
 	threadHandle[ServerApp::THREAD_CONSOLE] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ConsoleLoop, (LPVOID)NULL, 0, &ThreadID[ServerApp::THREAD_CONSOLE]);
+	threadHandle[ServerApp::THREAD_GAME] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)GameLoop, (LPVOID)NULL, 0, &ThreadID[ServerApp::THREAD_GAME]);
 
 	// Wait for everything to end first
 	WaitForMultipleObjects(ServerApp::THREAD_TOTAL, threadHandle, TRUE, INFINITE);
@@ -42,5 +44,13 @@ void ConsoleLoop(void)
 	while (true)
 	{
 		app->ConsoleLoop();
+	}
+}
+
+void GameLoop(void)
+{
+	while (true)
+	{
+		app->GameLoop();
 	}
 }

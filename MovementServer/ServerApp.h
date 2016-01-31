@@ -42,6 +42,7 @@ public:
 	{
 		THREAD_PACKET_HANDLER,
 		THREAD_CONSOLE,
+		THREAD_GAME,
 		THREAD_TOTAL
 	};
 
@@ -64,11 +65,14 @@ private:
 	vector<Room> rooms_;			// Stores references to clients in a room
 
 	// Goals. The same goals will be used for all rooms.
-	Goal LeftGoal;
-	Goal RightGoal;
+	Goal leftGoal;
+	Goal rightGoal;
 
 	// Handle to the Console
 	Console* console;
+
+	// For Delta Time
+	double oldTime;
 
 	unsigned int newID;
 	
@@ -92,11 +96,12 @@ private:
 	Room* findRoom(int roomID);
 
 public:
-	ServerApp(float packetHandlerDelay = 10.0f, float consoleDelay = 100.0f);
+	ServerApp(float packetHandlerDelay = 10.0f, float consoleDelay = 100.0f, float gameDelay = 0.0f);
 	~ServerApp();
 
 	void PacketHandlerLoop();
 	void ConsoleLoop();
+	void GameLoop();
 };
 
 #endif

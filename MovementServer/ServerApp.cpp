@@ -114,7 +114,7 @@ Room* ServerApp::findRoom(int roomID)
 	return nullptr;
 }
 
-ServerApp::ServerApp(float packetHandlerDelay, float consoleDelay) 
+ServerApp::ServerApp(float packetHandlerDelay, float consoleDelay, float gameDelay)
 	: rakpeer_(RakNetworkFactory::GetRakPeerInterface())
 	, newID(0)
 	, console(Console::Instance())
@@ -127,7 +127,16 @@ ServerApp::ServerApp(float packetHandlerDelay, float consoleDelay)
 	// Set the delay for the threads
 	loopDelay[THREAD_PACKET_HANDLER] = packetHandlerDelay;
 	loopDelay[THREAD_CONSOLE] = consoleDelay;
+	loopDelay[THREAD_GAME] = gameDelay;
 
+	// Initialize Goals
+	leftGoal.Init(0, 0, 0, 400, 100, 50, 200);
+	rightGoal.Init(0, 750, 400, 0, 100, 50, 200);
+
+	// Initialize the Timer
+	oldTime = RakNet::GetTime();
+
+	// Announce server start
 	console->Print("Server Started\n");
 }
 
@@ -335,6 +344,18 @@ void ServerApp::ConsoleLoop()
 		}
 		break;
 	}
+}
+
+void ServerApp::GameLoop()
+{
+	float currentTime = RakNet::GetTime();
+	float dt = oldTime - currentTime;
+	oldTime = currentTime;
+
+	leftGoal.Update(dt);
+	rightGoal.Update(dt);
+
+	Sleep(loopDelay[THREAD_GAME]);
 }
 
 void ServerApp::SendWelcomePackage(SystemAddress& addr)
