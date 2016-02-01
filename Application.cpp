@@ -441,6 +441,9 @@ int Application::HandlePackets(Packet * packet)
 			// Get the room ID
 			int roomID = 0;
 			bs.Read(roomID);
+			// Get the team type
+			Room::TEAM_TYPE team = Room::TOTAL_TEAMS;
+			bs.Read(team);
 			
 			// Update the room
 			// -- Find the room
@@ -448,7 +451,7 @@ int Application::HandlePackets(Packet * packet)
 			if (rm)
 			{
 				// Add the user into the room to update the room
-				rm->AddUser(userID);
+				rm->AddUser(userID, team);
 
 				// Check if we are the one getting the join message
 				if (userID == ships_.at(0)->GetID())

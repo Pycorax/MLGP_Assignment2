@@ -61,6 +61,8 @@ void ServerApp::NotifyUserJoinedRoom(SystemAddress & userThatJoined, int roomJoi
 	bs.Write(clients_.at(userThatJoined).id);
 	// -- The room that the person joined
 	bs.Write(roomJoined);
+	// -- The team that the person joined
+	bs.Write(findRoom(roomJoined)->GetUserTeam(clients_.at(userThatJoined).id));
 	// Broadcast to everyone that this new room has been created
 	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
 }
