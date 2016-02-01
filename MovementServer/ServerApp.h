@@ -87,6 +87,7 @@ private:
 	void NotifyServerFull(SystemAddress& addr);
 	void NotifyNewRoomCreated();
 	void NotifyUserJoinedRoom(SystemAddress& userThatJoined, int roomJoined);
+	void NotifyUserLeftRoom(SystemAddress& userThatLeft);
 
 	// Rooms Helper Functions   ---> In hindsight, I should've really put this into a RoomManager class but too late now
 	// -- Create a room

@@ -118,6 +118,7 @@ class Application
 	// Rooms
 	Room* currentRoom;			// Stores a pointer to the current room we are in. If nullptr, means is in lobby
 	bool joiningRoom;
+	bool leavingRoom;
 
 	// Buttons
 	Button buttons[BT_TOTAL];
@@ -151,6 +152,7 @@ class Application
 	// Rooms
 	void createRoomButton(Room* rm);
 	void joinRoom(int roomID);
+	void leaveRoom(void);
 	Room* findRoom(int roomID);
 	Room * findRoomUserIsIn(int userID);
 

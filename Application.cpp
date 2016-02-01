@@ -40,6 +40,7 @@ Application::Application()
 	, mymissile(nullptr)
 	, keydown_enter(false)
 	, joiningRoom(false)
+	, leavingRoom(false)
 	, currentRoom(nullptr)
 {
 }
@@ -502,6 +503,40 @@ int Application::HandlePackets(Packet * packet)
 		}
 		break;
 
+		case ID_LEAVEROOM:
+		{
+			// Get the user who joined
+			int userID;
+			bs.Read(userID);
+
+			// Update the room
+			// -- Find the room of this user
+			Room* rm = findRoomUserIsIn(userID);
+			if (rm)
+			{
+				// Remove the user from the room to update the room
+				rm->RemoveUser(userID);
+
+				// Check if we are the one getting the join message
+				if (userID == ships_.at(0)->GetID())
+				{
+					// Set the current room
+					currentRoom = nullptr;
+					// We have left!, we can trying stop now.
+					leavingRoom = false;
+					// Go to the game lobby
+					changeState(AS_LOBBY);
+
+					std::cout << "Returned to lobby!" << std::endl;
+				}
+				else
+				{
+					std::cout << "User #" << userID << " has has returned to lobby!" << std::endl;
+				}
+			}
+		}
+		break;
+
 	#pragma endregion
 
 #pragma region Gameplay Messages
@@ -823,6 +858,13 @@ bool Application::newRoomUpdate()
 
 bool Application::gameUpdate()
 {
+	// Exit
+	if (!leavingRoom && hge_->Input_GetKeyState(HGEK_ESCAPE))
+	{
+		// Send message requesting leave room
+		leaveRoom();
+	}
+
 	// Get the delta time
 	float timedelta = hge_->Timer_GetDelta();
 
@@ -1044,6 +1086,9 @@ bool Application::newRoomRender()
 
 void Application::gameRender()
 {
+	float screenwidth = static_cast<float>(hge_->System_GetState(HGE_SCREENWIDTH));
+	float screenheight = static_cast<float>(hge_->System_GetState(HGE_SCREENHEIGHT));
+
 	auto shipsInRoom = currentRoom->GetConnectedIDs();
 	for (auto ship : ships_)
 	{
@@ -1090,6 +1135,15 @@ void Application::gameRender()
 	{
 		goal->Render();
 	}
+
+	// Render error messages
+	if (notifyMessage.length() > 0)
+	{
+		font_->SetColor(ARGB(255, 255, 0, 0));
+		font_->SetScale(0.8f);
+		font_->printf(screenwidth * 0.5f, screenheight * 0.9f, HGETEXT_CENTER, "%s", notifyMessage.c_str());
+		font_->SetColor(ARGB(255, 255, 255, 255));
+	}
 }
 
 Ship * Application::findShip(int id)
@@ -1133,6 +1187,20 @@ void Application::joinRoom(int roomID)
 
 	// Set the flag for joining a room
 	joiningRoom = true;
+}
+
+void Application::leaveRoom(void)
+{
+	RakNet::BitStream bs;
+	unsigned char msgid = ID_LEAVEROOM;
+	bs.Write(msgid);
+
+	std::cout << "Attempting to leave room!" << std::endl;
+
+	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
+
+	// Set the flag for leaving a room
+	leavingRoom = true;
 }
 
 Room * Application::findRoom(int roomID)

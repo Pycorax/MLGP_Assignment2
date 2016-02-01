@@ -63,7 +63,23 @@ void ServerApp::NotifyUserJoinedRoom(SystemAddress & userThatJoined, int roomJoi
 	bs.Write(roomJoined);
 	// -- The team that the person joined
 	bs.Write(findRoom(roomJoined)->GetUserTeam(clients_.at(userThatJoined).id));
-	// Broadcast to everyone that this new room has been created
+
+	// Broadcast to everyone that this user has joined
+	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
+}
+
+void ServerApp::NotifyUserLeftRoom(SystemAddress & userThatLeft)
+{
+	RakNet::BitStream bs;
+
+	// State the purpose of the message
+	bs.Write(static_cast<unsigned char>(ID_LEAVEROOM));
+
+	// Send details of the situation
+	// -- The ID of the person that left the room
+	bs.Write(clients_.at(userThatLeft).id);
+
+	// Broadcast to everyone that this user is back in the lobby
 	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
 }
 
@@ -265,7 +281,7 @@ void ServerApp::PacketHandlerLoop()
 						console->Print("User #" + to_string(userID) + " has joined room #" + to_string(roomID) + ": " + rm->GetName() + "!\n");
 
 						// Now we remove him from the lobby
-						lobby.RemoveUser(roomID);
+						lobby.RemoveUser(userID);
 					}
 					else
 					{
@@ -278,6 +294,38 @@ void ServerApp::PacketHandlerLoop()
 				}
 			}
 			break;
+
+		case ID_LEAVEROOM:
+		{
+			// Check if this user is in a room
+			int userID = clients_.at(packet->systemAddress).id;
+			if (userIsInARoom(userID))
+			{
+				// Find the room that the user is in
+				Room* rm = findRoomUserIsIn(userID);
+				if (rm != nullptr)
+				{
+					// Remove the User
+					rm->RemoveUser(userID);
+					// Notify the user that he has left and returned back to the lobby
+					NotifyUserLeftRoom(packet->systemAddress);
+					// Print on Server
+					console->Print("User #" + to_string(userID) + " has returned to the lobby!\n");
+
+					// Now we add him to the lobby
+					lobby.AddUser(userID);
+				}
+				else
+				{
+					console->Print("User #" + to_string(userID) + " tried to leave a non-existent room!\n");
+				}
+			}
+			else
+			{
+				console->Print("User #" + to_string(userID) + " tried to leave when not in a room!\n");
+			}
+		}
+		break;
 
 #pragma endregion
 
