@@ -336,6 +336,7 @@ int Application::HandlePackets(Packet * packet)
 
 			bs.Read(id);
 			ships_.at(0)->setID(id);
+			ships_.at(0)->SetBoomSprite(sprites_[ST_BOOM]);
 			bs.Read(shipcount);
 			
 			// Receive list of all ships
@@ -348,6 +349,7 @@ int Application::HandlePackets(Packet * packet)
 				std::cout << "New Ship " << nameArray << " at pos" << x_ << " " << y_ << std::endl;
 				Ship* ship = new Ship(x_, y_);
 				ship->SetName(nameArray);
+				ship->SetBoomSprite(sprites_[ST_BOOM]);
 				ship->setID(id);
 				ships_.push_back(ship);
 			}
@@ -525,6 +527,7 @@ int Application::HandlePackets(Packet * packet)
 				std::cout << "New Ship pos" << x_ << " " << y_ << std::endl;
 				Ship* ship = new Ship( x_, y_);
 				ship->SetName(name_);
+				ship->SetBoomSprite(sprites_[ST_BOOM]);
 				ship->setID(id);
 				ships_.push_back(ship);
 			}

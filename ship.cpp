@@ -5,11 +5,6 @@
 #include <math.h>
 #include <iostream>
 
-#define SHIPTYPE1 "ship1.png"
-#define SHIPTYPE2 "ship2.png"
-#define SHIPTYPE3 "ship3.png"
-#define SHIPTYPE4 "ship4.png"
-
 /**
 * Ship Constructor
 *
@@ -19,6 +14,8 @@
 *
 * @param filename Name of the graphics file used to represent the ship
 */
+
+const double Ship::BOOM_SHOW_TIME = 0.25f;
 
 Ship::Ship(float locx_, float locy_) 
 :	w_(0)
@@ -35,6 +32,8 @@ Ship::Ship(float locx_, float locy_)
 ,	ratio_(1)
 ,	health_(MAX_HEALTH)
 ,	sprite_(nullptr)
+,	boomSprite_(nullptr)
+,	boomShowTimer(0.0f)
 #endif
 {
 
@@ -189,6 +188,12 @@ void Ship::Update(float timedelta)
 		y_ += screenheight + spriteheight;
 	else if (y_ > screenheight + spriteheight/2)
 		y_ -= screenheight + spriteheight;
+
+	// Boom
+	if (boomShowTimer > 0.0f)
+	{
+		boomShowTimer -= timedelta;
+	}
 }
 
 
@@ -202,8 +207,14 @@ void Ship::Update(float timedelta)
 
 void Ship::Render()
 {
-
-	sprite_->RenderEx(x_, y_, w_);
+	if (boomShowTimer > 0.0f)
+	{
+		boomSprite_->RenderEx(x_, y_, w_);
+	}
+	else
+	{
+		sprite_->RenderEx(x_, y_, w_);
+	}
 
 	font_->printf(x_+5, y_+5, HGETEXT_LEFT, "%s",
 			  mytext_.c_str());
@@ -261,6 +272,7 @@ void Ship::Injure(int damage)
 	}
 
 	health_ -= damage;
+	boomShowTimer = BOOM_SHOW_TIME;
 }
 
 void Ship::SendObject(RakPeerInterface * peer, MyMsgIDs type) const
@@ -306,6 +318,7 @@ void Ship::SendObject(RakPeerInterface * peer, MyMsgIDs type) const
 		{
 			bs.Write(id);
 			bs.Write(health_);
+			bs.Write(boomShowTimer);
 		}
 		break;
 	}
@@ -354,6 +367,7 @@ void Ship::RecvObject(RakNet::BitStream * bs, MyMsgIDs type)
 		case ID_INJURED:
 		{
 			bs->Read(health_);
+			bs->Read(boomShowTimer);
 		}
 		break;
 	}

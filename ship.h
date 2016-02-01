@@ -24,6 +24,7 @@ class Ship : public INetworkProcessable
 	// HGE
 	HTEXTURE tex_; //!< Handle to the sprite's texture
 	hgeSprite* sprite_; //!< The sprite used to display the ship
+	hgeSprite* boomSprite_;
 	std::auto_ptr<hgeFont> font_;
 	hgeRect collidebox;
 
@@ -34,6 +35,10 @@ class Ship : public INetworkProcessable
 	static const int MAX_HEALTH = 100;
 	static const int MIN_HEALTH = 0;
 	int health_;
+
+	// Boom
+	static const double BOOM_SHOW_TIME;
+	double boomShowTimer;
 
 	// Positioning
 	float x_; //!< The x-cordinate of the ship
@@ -75,6 +80,7 @@ public:
 	void SetName(const char * text);
 	
 	void SetSprite(hgeSprite* sprite) { sprite_ = sprite; }
+	void SetBoomSprite(hgeSprite* sprite) { boomSprite_ = sprite; }
 
 	hgeRect* GetBoundingBox();
 	bool HasCollided( Ship *ship );
