@@ -662,15 +662,6 @@ int Application::HandlePackets(Packet * packet)
 		}
 		break;
 
-		case ID_UPDATEBALL:
-		{
-			for (auto& room : roomsList)
-			{
-				room->GetBall().RecvObject(&bs, MyMsgIDs::ID_UPDATEBALL);
-			}
-		}
-		break;
-
 #pragma endregion
 
 		default:

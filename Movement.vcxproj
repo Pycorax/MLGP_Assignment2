@@ -98,6 +98,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
+    <ClCompile Include="Ball.cpp" />
     <ClCompile Include="Button.cpp" />
     <ClCompile Include="ClientGoal.cpp" />
     <ClCompile Include="main.cpp" />
@@ -107,6 +108,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
+    <ClInclude Include="Ball.h" />
     <ClInclude Include="Button.h" />
     <ClInclude Include="ClientGoal.h" />
     <ClInclude Include="Globals.h" />
