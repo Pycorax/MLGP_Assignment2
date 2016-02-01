@@ -22,8 +22,10 @@ enum MyMsgIDs
 	// Missiles
 	ID_NEWMISSILE,
 	ID_UPDATEMISSILE,
+	// Goal
+	ID_UPDATEGOAL,
 	// Ball
-	ID_UPDATEGOAL
+	ID_UPDATEBALL,
 };
 
 #endif

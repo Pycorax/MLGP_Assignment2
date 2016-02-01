@@ -387,14 +387,30 @@ void ServerApp::GameLoop()
 	leftGoal.Update(dt);
 	rightGoal.Update(dt);
 
-	// Update Clients about the Goals
+	// Update the Balls
+	for (auto& room : rooms_)
+	{
+		room.Update(dt);
+	}
+
+	// Update Clients about the Game Objects
 	static float timeSinceLastUpdate = 0.0f;
 	static const float TIME_UPDATE_DELTA = 0.1f;
 	timeSinceLastUpdate += dt;
 	if (timeSinceLastUpdate > TIME_UPDATE_DELTA)
 	{
+		// Update Clients about the Goals
 		leftGoal.SendObject(rakpeer_, MyMsgIDs::ID_UPDATEGOAL);
 		rightGoal.SendObject(rakpeer_, MyMsgIDs::ID_UPDATEGOAL);
+
+		// Update Clients about the Balls for each Room
+		RakNet::BitStream bs;
+		bs.Write(static_cast<unsigned char>(MyMsgIDs::ID_UPDATEBALL));
+		for (auto room : rooms_)
+		{
+			 room.GetBall().SendObject(&bs, MyMsgIDs::ID_UPDATEBALL);
+		}
+		rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
 
 		// Reset timer
 		timeSinceLastUpdate = 0.0f;

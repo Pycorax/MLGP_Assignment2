@@ -66,7 +66,7 @@ class Ship : public INetworkProcessable
 public:
 	static const int MAX_NAME_LENGTH = 15;
 
-	Ship(float locx_, float locy_);
+	Ship(float locx_ = 0.0f, float locy_ = 0.0f);
 	~Ship();
 	void Update(float timedelta);
 	void Render();

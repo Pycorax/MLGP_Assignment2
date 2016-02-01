@@ -25,11 +25,11 @@ private:
 	// Room Details
 	string name;
 	int id;
-	vector<int> connectedIDs;				// Stores the IDs of the clients that are connected to this roomRoom(string _name = "") : name(_name) {}
+	vector<int> connectedIDs;				// Stores the IDs of the clients that are connected to this room
 
 	// Game Play 
 	vector<int> teamList[TOTAL_TEAMS];		// Stores the IDs of teams
-	int scores[TOTAL_TEAMS];					// Stores the score
+	int scores[TOTAL_TEAMS];				// Stores the score
 
 public:
 	Room(string _name = "", int _id = 0) : id(_id)
@@ -41,6 +41,9 @@ public:
 		{
 			score = 0;
 		}
+
+		// Initialize the ball
+		ResetBall();
 	}
 
 	void AddUser(int userID, TEAM_TYPE team = TOTAL_TEAMS)
@@ -161,6 +164,22 @@ public:
 		}
 
 		return TOTAL_TEAMS;
+	}
+
+	Ship GetBall()
+	{
+		return ball;
+	}
+
+	void ResetBall()
+	{
+		HGE* hge_ = hgeCreate(HGE_VERSION);
+
+		// Get the screen resolution
+		float screenwidth = static_cast<float>(hge_->System_GetState(HGE_SCREENWIDTH));
+		float screenheight = static_cast<float>(hge_->System_GetState(HGE_SCREENHEIGHT));
+
+		ball.setLocation(screenwidth * 0.5f, screenheight * 0.5f, 0.0f);
 	}
 
 
