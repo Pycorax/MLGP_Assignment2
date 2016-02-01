@@ -37,7 +37,6 @@ void ServerApp::NotifyNewRoomCreated()
 	// State the purpose of the message
 	bs.Write(static_cast<unsigned char>(ID_NEWROOM));
 
-	EnterCriticalSection(&roomAccessCSection);
 	// Send details of the new room
 	// --Send the room name
 	bs.Write(rooms_.back().GetName().c_str());
@@ -48,7 +47,6 @@ void ServerApp::NotifyNewRoomCreated()
 	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
 
 	console->Print("Created new room: " + rooms_.back().GetName() + " of ID #" + to_string(rooms_.back().GetID()) + "!\n");
-	LeaveCriticalSection(&roomAccessCSection);
 }
 
 void ServerApp::NotifyUserJoinedRoom(SystemAddress & userThatJoined, int roomJoined)
@@ -71,7 +69,7 @@ void ServerApp::createRoom(string roomName)
 {
 	EnterCriticalSection(&newRoomCSection);
 	// Create the room
-	rooms_.push_back(Room(new Ball, roomName, rooms_.size()));
+	rooms_.push_back(Room(roomName, rooms_.size()));
 	// Inform everyone of the new room
 	NotifyNewRoomCreated();
 	LeaveCriticalSection(&newRoomCSection);
@@ -94,10 +92,6 @@ bool ServerApp::userIsInARoom(int userID)
 
 Room * ServerApp::findRoomUserIsIn(int userID)
 {
-	bool found = false;
-	Room* userRoom = nullptr;
-
-	EnterCriticalSection(&roomAccessCSection);
 	for (auto& room : rooms_)
 	{
 		// Get the list of people connected to this room
@@ -109,39 +103,25 @@ Room * ServerApp::findRoomUserIsIn(int userID)
 			if (userID == id)
 			{
 				// This is his room
-				userRoom = &room;
-				found = true;
-				break;
+				return &room;
 			}
 		}
-
-		if (found)
-		{
-			break;
-		}
 	}
-	LeaveCriticalSection(&roomAccessCSection);
 
-	return userRoom;
+	return nullptr;
 }
 
 Room* ServerApp::findRoom(int roomID)
 {
-	Room* userRoom = nullptr;
-
-	EnterCriticalSection(&roomAccessCSection);
 	for (auto& room : rooms_)
 	{
 		if (room.GetID() == roomID)
 		{
-			userRoom = &room;
-
-			break;
+			return &room;
 		}
 	}
-	LeaveCriticalSection(&roomAccessCSection);
 
-	return userRoom;
+	return nullptr;
 }
 
 ServerApp::ServerApp(float packetHandlerDelay, float consoleDelay, float gameDelay)
@@ -168,7 +148,6 @@ ServerApp::ServerApp(float packetHandlerDelay, float consoleDelay, float gameDel
 
 	// Initialize Critical Sections
 	InitializeCriticalSection(&newRoomCSection);
-	InitializeCriticalSection(&roomAccessCSection);
 
 	// Announce server start
 	console->Print("Server Started\n");
@@ -176,16 +155,8 @@ ServerApp::ServerApp(float packetHandlerDelay, float consoleDelay, float gameDel
 
 ServerApp::~ServerApp()
 {
-	// Clear RoomsList
-	while (rooms_.size() > 0)
-	{
-		rooms_.back().Exit();
-		rooms_.pop_back();
-	}
-
 	// Destroy Critical Sections
 	DeleteCriticalSection(&newRoomCSection);
-	DeleteCriticalSection(&roomAccessCSection);
 
 	// Shut down RakNet
 	rakpeer_->Shutdown(100);
@@ -345,17 +316,6 @@ void ServerApp::PacketHandlerLoop()
 			rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE, 0, packet->systemAddress, true);
 		}
 		break;
-
-		case ID_UPDATEBALL:
-		{
-			int roomID = 0;
-
-			// Get the room who owns this ball
-			bs.Read(roomID);
-			// Get the room
-			findRoom(roomID)->Receive(&bs, ID_UPDATEBALL);
-		}
-		break;
 	#pragma endregion
 
 		default:
@@ -384,13 +344,11 @@ void ServerApp::ConsoleLoop()
 			bool hasRoom = false;
 
 			console->Print("\\List of Rooms: \n");
-			EnterCriticalSection(&roomAccessCSection);
 			for (auto room : rooms_)
 			{
 				console->Print("\\#" + to_string(room.GetID()) + " -> " + room.GetName() + "(" + to_string(room.GetTeamList(Room::TEAM_BLUE).size()) + " + " + to_string(room.GetTeamList(Room::TEAM_RED).size()) + " = " + to_string(room.GetConnectedIDs().size()) + ")\n");
 				hasRoom = true;
 			}
-			LeaveCriticalSection(&roomAccessCSection);
 
 			// Say it's empty if it is
 			if (!hasRoom)
@@ -430,12 +388,10 @@ void ServerApp::GameLoop()
 	rightGoal.Update(dt);
 
 	// Update the Balls
-	EnterCriticalSection(&roomAccessCSection);
 	for (auto& room : rooms_)
 	{
 		room.Update(dt);
 	}
-	LeaveCriticalSection(&roomAccessCSection);
 
 	// Update Clients about the Game Objects
 	static float timeSinceLastUpdate = 0.0f;
@@ -450,13 +406,11 @@ void ServerApp::GameLoop()
 		// Update Clients about the Balls for each Room
 		RakNet::BitStream bs;
 		bs.Write(static_cast<unsigned char>(MyMsgIDs::ID_UPDATEBALL));
-		EnterCriticalSection(&roomAccessCSection);
 		for (auto room : rooms_)
 		{
-			 room.Send(&bs, MyMsgIDs::ID_UPDATEBALL);
+			 room.GetBall().SendObject(&bs, MyMsgIDs::ID_UPDATEBALL);
 		}
 		rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
-		LeaveCriticalSection(&roomAccessCSection);
 
 		// Reset timer
 		timeSinceLastUpdate = 0.0f;
@@ -495,9 +449,9 @@ void ServerApp::SendWelcomePackage(SystemAddress& addr)
 	rightGoal.SendObject(&bs, ID_WELCOME);
 
 	// Send list of rooms and members
-	EnterCriticalSection(&roomAccessCSection);
 	// -- Send the number of rooms so that the client knows what to expect
 	bs.Write(rooms_.size());
+
 	// -- Send each room
 	for (auto room : rooms_)
 	{
@@ -519,7 +473,6 @@ void ServerApp::SendWelcomePackage(SystemAddress& addr)
 			bs.Write(room.GetUserTeam(id));
 		}
 	}
-	LeaveCriticalSection(&roomAccessCSection);
 
 	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED,0, addr, false);
 

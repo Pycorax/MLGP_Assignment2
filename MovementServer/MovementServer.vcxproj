@@ -96,7 +96,6 @@
     <ClCompile Include="ServerApp.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Ball.h" />
     <ClInclude Include="ColorSystem.h" />
     <ClInclude Include="Console.h" />
     <ClInclude Include="ConsoleCommand.h" />

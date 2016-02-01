@@ -5,12 +5,6 @@
 #include <vector>
 #include <ctime>
 
-// API Includes
-#include "BitStream.h"
-
-// Other Includes
-#include "Ball.h"
-
 // Using Directives
 using std::string;
 using std::vector;
@@ -36,10 +30,9 @@ private:
 	// Game Play 
 	vector<int> teamList[TOTAL_TEAMS];		// Stores the IDs of teams
 	int scores[TOTAL_TEAMS];				// Stores the score
-	Ball* ball;					// Ball pointer
 
 public:
-	Room(Ball* ballPtr = new Ball, string _name = "", int _id = 0) : id(_id)
+	Room(string _name = "", int _id = 0) : id(_id)
 	{
 		name = trim(_name, MAX_ROOM_NAME_LENGTH);
 
@@ -49,21 +42,8 @@ public:
 			score = 0;
 		}
 
-		ball = ballPtr;
-
 		// Initialize the ball
 		ResetBall();
-	}
-
-	void Update(double dt)
-	{
-		ball->Update(dt);
-	}
-
-	void Exit(void)
-	{
-		delete ball;
-		ball = nullptr;
 	}
 
 	void AddUser(int userID, TEAM_TYPE team = TOTAL_TEAMS)
@@ -186,26 +166,22 @@ public:
 		return TOTAL_TEAMS;
 	}
 
-	void ResetBall()
-	{
-		static const int WINDOW_WIDTH = 800;
-		static const int WINDOW_HEIGHT = 600;
-		ball->setLocation(WINDOW_WIDTH * 0.5f, WINDOW_HEIGHT * 0.5f, 0.0f);
-	}
-
-	Ball* GetBall()
+	Ship GetBall()
 	{
 		return ball;
 	}
 
-	void Send(RakNet::BitStream* bs, MyMsgIDs type)
+	void ResetBall()
 	{
-		ball->SendObject(bs, type);
+		HGE* hge_ = hgeCreate(HGE_VERSION);
+
+		// Get the screen resolution
+		float screenwidth = static_cast<float>(hge_->System_GetState(HGE_SCREENWIDTH));
+		float screenheight = static_cast<float>(hge_->System_GetState(HGE_SCREENHEIGHT));
+
+		ball.setLocation(screenwidth * 0.5f, screenheight * 0.5f, 0.0f);
 	}
-	void Receive(RakNet::BitStream* bs, MyMsgIDs type)
-	{
-		ball->RecvObject(bs, type);
-	}
+
 
 private:
 	bool isConnected(int userID)		// Checks if a user is connected

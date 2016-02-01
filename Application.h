@@ -8,7 +8,6 @@
 #include "RoomButton.h"
 #include "MovementServer\Room.h"
 #include "ClientGoal.h"
-#include "ClientBall.h"
 
 class HGE;
 class hgeFont;
@@ -46,7 +45,6 @@ class Application
 		TT_GOAL,
 		TT_SHIP_BLUE,
 		TT_SHIP_RED,
-		TT_BALL,
 		TT_TOTAL
 	};
 
@@ -58,7 +56,6 @@ class Application
 		ST_GOAL,
 		ST_SHIP_BLUE,
 		ST_SHIP_RED,
-		ST_BALL,
 		ST_TOTAL
 	};
 
@@ -160,7 +157,6 @@ class Application
 	// Others
 	bool updateInputBuffer(int maxBufferLength);
 	bool checkCollisions(Ship* ship, ShipList shipsToCheckWith);
-	bool checkCollisions(ClientBall* ball, ShipList shipsToCheckWith);
 	bool SendInitialPosition();
 
 	// Missile Functions

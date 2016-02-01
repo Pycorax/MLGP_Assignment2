@@ -8,7 +8,6 @@
 
 // API Includes
 #include "RakNetTypes.h"
-#include <Windows.h>
 
 // Other Includes
 #include "Room.h"
@@ -77,7 +76,6 @@ private:
 
 	// Multi-Threading
 	CRITICAL_SECTION newRoomCSection;
-	CRITICAL_SECTION roomAccessCSection;
 
 	void SendWelcomePackage(SystemAddress& addr);
 	void SendDisconnectionNotification(SystemAddress& addr);

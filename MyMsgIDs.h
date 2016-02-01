@@ -26,7 +26,6 @@ enum MyMsgIDs
 	ID_UPDATEGOAL,
 	// Ball
 	ID_UPDATEBALL,
-	ID_COLLIDEBALL
 };
 
 #endif

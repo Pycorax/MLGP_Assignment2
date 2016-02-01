@@ -1,23 +1,16 @@
 #include "Application.h"
-
-// STL Includes
-#include <string>
-#include <iostream>
-#include <fstream>
-
-// API Includes
-#include <hge.h>
-#include <hgefont.h>
+#include "ship.h"
+#include "Globals.h"
+#include "MyMsgIDs.h"
 #include "RakNetworkFactory.h"
 #include "RakPeerInterface.h"
 #include "Bitstream.h"
 #include "GetTime.h"
-
-// Other Includes
-#include "ship.h"
-#include "Globals.h"
-#include "MyMsgIDs.h"
-#include "ClientBall.h"
+#include <hge.h>
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <hgefont.h>
 
 // Lab 13 Task 9a : Uncomment the macro NETWORKMISSILE
 #define NETWORKMISSILE
@@ -99,7 +92,6 @@ bool Application::Init()
 		textures_[TT_GOAL] = hge_->Texture_Load("goal.png");
 		textures_[TT_SHIP_BLUE] = hge_->Texture_Load("ship_blue.png");
 		textures_[TT_SHIP_RED] = hge_->Texture_Load("ship_red.png");
-		textures_[TT_BALL] = hge_->Texture_Load("ball.png");
 
 		// Load Sprites
 		sprites_[ST_BG] = new hgeSprite(textures_[TT_BG], 0, 0, screenwidth, screenheight);
@@ -114,8 +106,6 @@ bool Application::Init()
 		sprites_[ST_SHIP_BLUE]->SetHotSpot(32, 32);
 		sprites_[ST_SHIP_RED] = new hgeSprite(textures_[TT_SHIP_RED], 0, 0, 64, 64);
 		sprites_[ST_SHIP_RED]->SetHotSpot(32, 32);
-		sprites_[ST_BALL] = new hgeSprite(textures_[TT_BALL], 0, 0, 80, 80);
-		sprites_[ST_BALL]->SetHotSpot(40, 40);
 
 		// Load Fonts
 		font_ = new hgeFont("font1.fnt");
@@ -238,7 +228,6 @@ void Application::Shutdown()
 	// Clear all rooms
 	while (roomsList.size() > 0)
 	{
-		roomsList.back()->Exit();
 		delete roomsList.back();
 		roomsList.pop_back();
 	}
@@ -396,7 +385,7 @@ int Application::HandlePackets(Packet * packet)
 				bs.Read(roomID);
 
 				// -- Create the room
-				roomsList.push_back(new Room(new ClientBall(sprites_[ST_BALL]), roomName, roomID));
+				roomsList.push_back(new Room(roomName, roomID));
 
 				// -- Create a button for that room
 				createRoomButton(roomsList.at(i));
@@ -435,7 +424,7 @@ int Application::HandlePackets(Packet * packet)
 			bs.Read(roomID);
 
 			// Create the room
-			roomsList.push_back(new Room(new ClientBall, roomName, roomID));
+			roomsList.push_back(new Room(roomName, roomID));
 
 			// Create the button for the room
 			createRoomButton(roomsList.back());
@@ -677,7 +666,7 @@ int Application::HandlePackets(Packet * packet)
 		{
 			for (auto& room : roomsList)
 			{
-				room->Receive(&bs, MyMsgIDs::ID_UPDATEBALL);
+				room->GetBall().RecvObject(&bs, MyMsgIDs::ID_UPDATEBALL);
 			}
 		}
 		break;
@@ -872,9 +861,6 @@ bool Application::gameUpdate()
 		{
 			checkCollisions(ship, roomShips);
 		}
-
-		// Check collisions with ball
-		checkCollisions(dynamic_cast<ClientBall*>(currentRoom->GetBall()), roomShips);
 	}
 
 	// Update my missile
@@ -933,12 +919,6 @@ bool Application::gameUpdate()
 	for (auto goal : goalList)
 	{
 		goal->Update(timedelta);
-	}
-
-	// Update the balls
-	for (auto& room : roomsList)
-	{
-		room->Update(timedelta);
 	}
 
 	// Handle the Packets that are received
@@ -1113,10 +1093,6 @@ void Application::gameRender()
 	{
 		goal->Render();
 	}
-
-	// Render the Ball
-	ClientBall* cBall = dynamic_cast<ClientBall*>(currentRoom->GetBall());
-	cBall->Render();
 }
 
 Ship * Application::findShip(int id)
@@ -1354,110 +1330,9 @@ bool Application::checkCollisions(Ship* ship, ShipList shipsToCheckWith)
 	return false;
 }
 
-bool Application::checkCollisions(ClientBall* ball, ShipList shipsToCheckWith)
-{
-	for (auto& thisship = shipsToCheckWith.begin(); thisship != shipsToCheckWith.end(); thisship++)
-	{
-		if (ball->HasCollided((*thisship)))
-		{
-			// Collision Check
-			if ((*thisship)->CanCollide(RakNet::GetTime()) && ball->CanCollide(RakNet::GetTime()))
-			{
-				std::cout << "ball collide!" << std::endl;
-
-#ifdef INTERPOLATEMOVEMENT
-				if (GetAbsoluteMag(ball->GetVelocityY()) > GetAbsoluteMag((*thisship)->GetVelocityY()))
-				{
-					// this transfers vel to thisship
-					(*thisship)->SetVelocityY((*thisship)->GetVelocityY() + ball->GetVelocityY() / 3);
-					ball->SetVelocityY(-ball->GetVelocityY());
-
-					(*thisship)->SetServerVelocityY((*thisship)->GetServerVelocityY() + ball->GetServerVelocityY() / 3);
-					ball->SetServerVelocityY(-ball->GetServerVelocityY());
-				}
-				else
-				{
-					ball->SetVelocityY(ball->GetVelocityY() + (*thisship)->GetVelocityY() / 3);
-					(*thisship)->SetVelocityY(-(*thisship)->GetVelocityY() / 2);
-
-					ball->SetServerVelocityY(ball->GetServerVelocityY() + (*thisship)->GetServerVelocityY() / 3);
-					(*thisship)->SetServerVelocityY(-(*thisship)->GetServerVelocityY() / 2);
-				}
-
-				if (GetAbsoluteMag(ball->GetVelocityX()) > GetAbsoluteMag((*thisship)->GetVelocityX()))
-				{
-					// this transfers vel to thisship
-					(*thisship)->SetVelocityX((*thisship)->GetVelocityX() + ball->GetVelocityX() / 3);
-					ball->SetVelocityX(-ball->GetVelocityX());
-
-					(*thisship)->SetServerVelocityX((*thisship)->GetServerVelocityX() + ball->GetServerVelocityX() / 3);
-					ball->SetServerVelocityX(-ball->GetServerVelocityX());
-				}
-				else
-				{
-					// ball transfers vel to asteroid
-					ball->SetVelocityX(ball->GetVelocityX() + (*thisship)->GetVelocityX() / 3);
-					(*thisship)->SetVelocityX(-(*thisship)->GetVelocityX() / 2);
-
-					ball->SetServerVelocityX(ball->GetServerVelocityX() + (*thisship)->GetServerVelocityX() / 3);
-					(*thisship)->SetServerVelocityX(-(*thisship)->GetServerVelocityX() / 2);
-				}
-
-				ball->SetPreviousLocation();
-#else
-				if (GetAbsoluteMag(ball->GetVelocityY()) > GetAbsoluteMag((*thisship)->GetVelocityY()))
-				{
-					// this transfers vel to thisship
-					(*thisship)->SetVelocityY((*thisship)->GetVelocityY() + ball->GetVelocityY() / 3);
-					ball->SetVelocityY(-ball->GetVelocityY());
-				}
-				else
-				{
-					ball->SetVelocityY(ball->GetVelocityY() + (*thisship)->GetVelocityY() / 3);
-					(*thisship)->SetVelocityY(-(*thisship)->GetVelocityY() / 2);
-				}
-
-				if (GetAbsoluteMag(ball->GetVelocityX()) > GetAbsoluteMag((*thisship)->GetVelocityX()))
-				{
-					// this transfers vel to thisship
-					(*thisship)->SetVelocityX((*thisship)->GetVelocityX() + ball->GetVelocityX() / 3);
-					ball->SetVelocityX(-ball->GetVelocityX());
-				}
-				else
-				{
-					// ball transfers vel to asteroid
-					ball->SetVelocityX(ball->GetVelocityX() + (*thisship)->GetVelocityX() / 3);
-					(*thisship)->SetVelocityX(-(*thisship)->GetVelocityX() / 2);
-				}
-
-
-				//				ball->SetVelocityY( -ball->GetVelocityY() );
-				//				ball->SetVelocityX( -ball->GetVelocityX() );
-
-				ball->SetPreviousLocation();
-#endif
-				// Send the collision
-				RakNet::BitStream bs;
-
-				// Note down the type of message
-				bs.Write(static_cast<unsigned char>(ID_COLLIDEBALL));
-				bs.Write(currentRoom->GetID());
-				ball->SendObject(rakpeer_, ID_COLLIDEBALL);
-				rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
-
-				return true;
-			}
-
-		}
-
-	}
-
-	return false;
-}
-
 void Application::CreateMissile(float x, float y, float w, int id)
 {
-	// Lab 13 Task 9b : Implement networked version of create missile
+	// Lab 13 Task 9b : Implement networked version of createmissile
 	RakNet::BitStream bs;
 	unsigned char msgid;
 	unsigned char deleted = 0;

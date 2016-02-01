@@ -99,7 +99,6 @@
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="Button.cpp" />
-    <ClCompile Include="ClientBall.cpp" />
     <ClCompile Include="ClientGoal.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="missile.cpp" />
@@ -109,7 +108,6 @@
   <ItemGroup>
     <ClInclude Include="Application.h" />
     <ClInclude Include="Button.h" />
-    <ClInclude Include="ClientBall.h" />
     <ClInclude Include="ClientGoal.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="INetworkProcessable.h" />
