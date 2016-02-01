@@ -366,6 +366,7 @@ int Application::HandlePackets(Packet * packet)
 			int roomID = -1;
 			int numShips = 0;
 			int shipID = 0;
+			Room::TEAM_TYPE shipTeam;
 			// -- Get number of rooms
 			unsigned numRooms = 0;
 			bs.Read(numRooms);
@@ -393,9 +394,11 @@ int Application::HandlePackets(Packet * packet)
 				{
 					// Retrieve the ship ID
 					bs.Read(shipID);
+					// Retrieve the ship team
+					bs.Read(shipTeam);
 
 					// Add the ID in
-					roomsList.back()->AddUser(shipID);
+					roomsList.back()->AddUser(shipID, shipTeam);
 				}
 
 				std::cout << "New Room: " << roomName << " with " << numShips << " players." << std::endl;
@@ -953,8 +956,7 @@ void Application::lobbyRender()
 	int shipNameYPos = screenheight * 0.2f;
 	font_->SetColor(ARGB(255, 255, 255, 255));
 	font_->SetScale(1.5f);
-	font_->printf(screenwidth * 0.8f, shipNameYPos, HGETEXT_RIGHT, "%s",
-		"Player List");
+	font_->printf(screenwidth * 0.8f, shipNameYPos, HGETEXT_RIGHT, "%s", "Player List");
 	// Renders the list of players connected
 	const int SHIP_Y_TITLE_OFFSET = 50;
 	const int SHIP_EACH_Y_OFFSET = 30;

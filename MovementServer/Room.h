@@ -3,6 +3,7 @@
 // STL Includes
 #include <string>
 #include <vector>
+#include <ctime>
 
 // Using Directives
 using std::string;
@@ -11,35 +12,100 @@ using std::vector;
 class Room
 {
 public:
+	enum TEAM_TYPE
+	{
+		TEAM_BLUE,
+		TEAM_ORANGE,
+		TOTAL_TEAMS
+	};
+
 	static const unsigned MAX_ROOM_NAME_LENGTH = 30;
 
 private:
+	// Room Details
 	string name;
 	int id;
-	vector<int> connectedIDs;		// Stores the IDs of the clients that are connected to this roomRoom(string _name = "") : name(_name) {}
+	vector<int> connectedIDs;				// Stores the IDs of the clients that are connected to this roomRoom(string _name = "") : name(_name) {}
+
+	// Game Play 
+	vector<int> teamList[TOTAL_TEAMS];		// Stores the IDs of teams
+	int scores[TOTAL_TEAMS];					// Stores the score
 
 public:
 	Room(string _name = "", int _id = 0) : id(_id)
 	{
 		name = trim(_name, MAX_ROOM_NAME_LENGTH);
+
+		// Initialize the scores
+		for (auto& score : scores)
+		{
+			score = 0;
+		}
 	}
 
-	void AddUser(int userID)
+	void AddUser(int userID, TEAM_TYPE team = TOTAL_TEAMS)
 	{
 		if (!isConnected(userID))
 		{
+			//  Add to connectedIDs
 			connectedIDs.push_back(userID);
+
+			// Is a team provided for us?
+			if (team == TOTAL_TEAMS)	// No?
+			{
+				// Determine the team to throw the player ourselves
+				if (teamList[TEAM_BLUE].size() > teamList[TEAM_ORANGE].size())
+				{
+					teamList[TEAM_ORANGE].push_back(userID);
+				}
+				else if (teamList[TEAM_BLUE].size() < teamList[TEAM_ORANGE].size())
+				{
+					teamList[TEAM_BLUE].push_back(userID);
+				}
+				else
+				{
+					// If they have an equal number, randomly pick one
+					srand(time_t(NULL));
+					if (rand() % 2)
+					{
+						teamList[TEAM_ORANGE].push_back(userID);
+					}
+					else
+					{
+						teamList[TEAM_BLUE].push_back(userID);
+					}
+				}
+			}
+			else	// Yes? We use what we're given
+			{
+				teamList[team].push_back(userID);
+			}
 		}
 	}
+
 	void RemoveUser(int userID)
 	{
 		if (isConnected(userID))
 		{
+			// Find user and Remove from connectedIDs
 			for (auto u = connectedIDs.begin(); u != connectedIDs.end(); ++u)
 			{
 				if (*u == userID)
 				{
 					connectedIDs.erase(u);
+					break;
+				}
+			}
+
+			// Find user and Remove from teamList
+			// -- Get the user's team
+			TEAM_TYPE team = GetUserTeam(userID);
+			// -- Find and remove from teamList
+			for (auto user = teamList[team].begin(); user != teamList[team].end(); ++user)
+			{
+				if (*user == userID)
+				{
+					teamList[team].erase(user);
 					break;
 				}
 			}
@@ -65,6 +131,38 @@ public:
 	{
 		return connectedIDs;
 	}
+
+	vector<int> GetTeamList(TEAM_TYPE team) const
+	{
+		return teamList[team];
+	}
+
+	int GetScore(TEAM_TYPE team) const
+	{
+		return scores[team];
+	}
+
+	TEAM_TYPE GetUserTeam(int userID) const
+	{
+		// Check for each team
+		for (int i = 0; i < TOTAL_TEAMS; ++i)
+		{
+			// Get the team
+			auto team = teamList[i];
+
+			// Check for each user
+			for (auto user : team)
+			{
+				if (user == userID)
+				{
+					return static_cast<TEAM_TYPE>(i);
+				}
+			}
+		}
+
+		return TOTAL_TEAMS;
+	}
+
 
 private:
 	bool isConnected(int userID)		// Checks if a user is connected

@@ -446,16 +446,16 @@ void ServerApp::SendWelcomePackage(SystemAddress& addr)
 		// -- Send the room ID
 		bs.Write(room.GetID());
 
-		// Get the list of users
+		// Send Connected List
+		// -- Get the list of users
 		auto connectedIDs = room.GetConnectedIDs();
-
-		// Send the number of users so that the client knows what to expect
+		// -- Send the number of users so that the client knows what to expect
 		bs.Write(connectedIDs.size());
-
-		// Send the list of users
+		// -- Send the list of users
 		for (auto id : connectedIDs)
 		{
 			bs.Write(id);
+			bs.Write(room.GetUserTeam(id));
 		}
 	}
 
