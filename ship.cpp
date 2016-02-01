@@ -315,22 +315,7 @@ void Ship::SendObject(RakPeerInterface * peer, MyMsgIDs type) const
 
 void Ship::SendObject(RakNet::BitStream * bs, MyMsgIDs type) const
 {
-	switch (type)
-	{
-	case ID_UPDATEBALL:
-		{
-			// Ship Update
-			bs->Write(id);
-			bs->Write(server_x_);
-			bs->Write(server_y_);
-			bs->Write(server_w_);
 
-			bs->Write(server_velx_);
-			bs->Write(server_vely_);
-			bs->Write(angular_velocity);
-		}
-		break;
-	}
 }
 
 void Ship::RecvObject(RakNet::BitStream * bs, MyMsgIDs type)
@@ -370,23 +355,6 @@ void Ship::RecvObject(RakNet::BitStream * bs, MyMsgIDs type)
 		case ID_INJURED:
 		{
 			bs->Read(health_);
-		}
-		break;
-
-		case ID_UPDATEBALL:
-		{
-			bs->Read(server_x_);
-			bs->Read(server_y_);
-			bs->Read(server_w_);
-
-			bs->Read(server_velx_);
-			bs->Read(server_vely_);
-			bs->Read(angular_velocity);
-
-			bs->Read(health_);
-
-			// Interpolation
-			DoInterpolateUpdate();
 		}
 		break;
 	}

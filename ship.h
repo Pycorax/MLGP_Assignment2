@@ -154,12 +154,12 @@ public:
 		velocity_y_ = server_vely_;
 		ratio_ = 0;
 	}
+#endif
 
 	// Health
 	bool IsAlive(void) { return health_ > MIN_HEALTH; }
 	int GetHealth(void) { return health_; }
 	void Injure(int damage);
-#endif
 
 	/*
 	* INetworkProccessable
