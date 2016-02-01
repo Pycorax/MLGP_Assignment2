@@ -23,7 +23,7 @@ class Ship : public INetworkProcessable
 {
 	// HGE
 	HTEXTURE tex_; //!< Handle to the sprite's texture
-	std::auto_ptr<hgeSprite> sprite_; //!< The sprite used to display the ship
+	hgeSprite* sprite_; //!< The sprite used to display the ship
 	std::auto_ptr<hgeFont> font_;
 	hgeRect collidebox;
 
@@ -60,20 +60,22 @@ class Ship : public INetworkProcessable
 #endif
 
 	unsigned int id;
-	int type_;
 	float angular_velocity;
 
 	unsigned int collidetimer;
 public:
 	static const int MAX_NAME_LENGTH = 15;
 
-	Ship(int type, float locx_, float locy_);
+	Ship(float locx_, float locy_);
 	~Ship();
 	void Update(float timedelta);
 	void Render();
 	void Accelerate(float acceleration, float timedelta);
+
 	void SetName(const char * text);
 	
+	void SetSprite(hgeSprite* sprite) { sprite_ = sprite; }
+
 	hgeRect* GetBoundingBox();
 	bool HasCollided( Ship *ship );
 
@@ -110,8 +112,6 @@ public:
 	float GetX() { return x_; }
 	float GetY() { return y_; }
 	float GetW() { return w_; }
-
-	int GetType() { return type_; }
 
 	std::string GetName() { return mytext_; }
 

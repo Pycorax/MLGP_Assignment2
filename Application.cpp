@@ -90,6 +90,8 @@ bool Application::Init()
 		textures_[TT_BOOM] = hge_->Texture_Load("boom.png");
 		textures_[TT_BUTTON] = hge_->Texture_Load("button.png");
 		textures_[TT_GOAL] = hge_->Texture_Load("goal.png");
+		textures_[TT_SHIP_BLUE] = hge_->Texture_Load("ship_blue.png");
+		textures_[TT_SHIP_RED] = hge_->Texture_Load("ship_red.png");
 
 		// Load Sprites
 		sprites_[ST_BG] = new hgeSprite(textures_[TT_BG], 0, 0, screenwidth, screenheight);
@@ -99,7 +101,11 @@ bool Application::Init()
 		sprites_[ST_BUTTON] = new hgeSprite(textures_[TT_BUTTON], 0, 0, 250, 50);
 		sprites_[ST_BUTTON]->SetHotSpot(125, 25);
 		sprites_[ST_GOAL] = new hgeSprite(textures_[TT_GOAL], 0, 0, 50, 200);
-		sprites_[ST_GOAL]->SetHotSpot(25, 100);
+		sprites_[ST_GOAL]->SetHotSpot(25, 100); 
+		sprites_[ST_SHIP_BLUE] = new hgeSprite(textures_[TT_SHIP_BLUE], 0, 0, 64, 64);
+		sprites_[ST_SHIP_BLUE]->SetHotSpot(32, 32);
+		sprites_[ST_SHIP_RED] = new hgeSprite(textures_[TT_SHIP_RED], 0, 0, 64, 64);
+		sprites_[ST_SHIP_RED]->SetHotSpot(32, 32);
 
 		// Load Fonts
 		font_ = new hgeFont("font1.fnt");
@@ -325,7 +331,6 @@ int Application::HandlePackets(Packet * packet)
 		{
 			unsigned int shipcount, id;
 			float x_, y_;
-			int type_;
 			char chartemp[5];
 			char nameArray[Ship::MAX_NAME_LENGTH];
 
@@ -340,9 +345,8 @@ int Application::HandlePackets(Packet * packet)
 				bs.Read(id);
 				bs.Read(x_);
 				bs.Read(y_);
-				bs.Read(type_);
 				std::cout << "New Ship " << nameArray << " at pos" << x_ << " " << y_ << std::endl;
-				Ship* ship = new Ship(type_, x_, y_);
+				Ship* ship = new Ship(x_, y_);
 				ship->SetName(nameArray);
 				ship->setID(id);
 				ships_.push_back(ship);
@@ -457,10 +461,37 @@ int Application::HandlePackets(Packet * packet)
 					changeState(AS_GAME);
 
 					std::cout << "Joined room #" << roomID << "!" << std::endl;
+
+					// If we are the ones who have joined, change the sprites of all in the room
+					auto connectedIDS = rm->GetConnectedIDs();
+					for (auto id : connectedIDS)
+					{
+						Ship* ship = findShip(id);
+						if (rm->GetUserTeam(id) == Room::TEAM_BLUE)
+						{
+							ship->SetSprite(sprites_[ST_SHIP_BLUE]);
+						}
+						else
+						{
+							ship->SetSprite(sprites_[ST_SHIP_RED]);
+						}
+					}
+					
 				}
 				else
 				{
 					std::cout << "User #" << userID << " has joined room #" << roomID << "!" << std::endl;
+
+					Ship* ship = findShip(userID);
+					// If this is a new user joining, change their sprite to the correct one
+					if (rm->GetUserTeam(userID) == Room::TEAM_BLUE)
+					{
+						ship->SetSprite(sprites_[ST_SHIP_BLUE]);
+					}
+					else
+					{
+						ship->SetSprite(sprites_[ST_SHIP_RED]);
+					}
 				}
 			}
 		}
@@ -483,15 +514,13 @@ int Application::HandlePackets(Packet * packet)
 			else
 			{
 				float x_, y_;
-				int type_;
 				char name_[Ship::MAX_NAME_LENGTH];
 
 				bs.Read(name_);
 				bs.Read(x_);
 				bs.Read(y_);
-				bs.Read(type_);
 				std::cout << "New Ship pos" << x_ << " " << y_ << std::endl;
-				Ship* ship = new Ship(type_, x_, y_);
+				Ship* ship = new Ship( x_, y_);
 				ship->SetName(name_);
 				ship->setID(id);
 				ships_.push_back(ship);
@@ -698,7 +727,7 @@ bool Application::joinUpdate()
 			break;
 		case ID_CONNECTION_REQUEST_ACCEPTED:
 			// Initialize ships
-			ships_.push_back(new Ship(rand() % 4 + 1, rand() % 500 + 100, rand() % 400 + 100));
+			ships_.push_back(new Ship(rand() % 500 + 100, rand() % 400 + 100));
 			ships_.at(0)->SetName(shipNameSaved.c_str());
 			connecting = false;
 			break;
@@ -1057,6 +1086,17 @@ void Application::gameRender()
 	}
 }
 
+Ship * Application::findShip(int id)
+{
+	for (auto& ship : ships_)
+	{
+		if (ship->GetID() == id)
+		{
+			return ship;
+		}
+	}
+}
+
 void Application::createRoomButton(Room* rm)
 {
 	// Don't allow production of more buttons than there are rooms
@@ -1142,7 +1182,6 @@ bool Application::SendInitialPosition()
 	bs.Write(ships_.at(0)->GetName().c_str());
 	bs.Write(ships_.at(0)->GetX());
 	bs.Write(ships_.at(0)->GetY());
-	bs.Write(ships_.at(0)->GetType());
 
 	std::cout << "Sending pos" << ships_.at(0)->GetX() << " " << ships_.at(0)->GetY() << std::endl;
 

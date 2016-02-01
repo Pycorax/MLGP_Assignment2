@@ -20,7 +20,7 @@
 * @param filename Name of the graphics file used to represent the ship
 */
 
-Ship::Ship(int type, float locx_, float locy_) 
+Ship::Ship(float locx_, float locy_) 
 :	w_(0)
 ,	angular_velocity(0)
 ,	velocity_x_(0)
@@ -34,10 +34,11 @@ Ship::Ship(int type, float locx_, float locy_)
 ,	server_vely_(0)
 ,	ratio_(1)
 ,	health_(MAX_HEALTH)
+,	sprite_(nullptr)
 #endif
 {
 
-	std::cout << "Creating Ship " << type << " " << locx_ << " " << locy_ << std::endl;
+	std::cout << "Creating Ship #" << id << " at " << locx_ << ", " << locy_ << std::endl;
 #ifdef INTERPOLATEMOVEMENT
 	x_ = server_x_ = client_x_ = locx_;
 	y_ = server_y_ = client_y_ = locy_;
@@ -46,34 +47,8 @@ Ship::Ship(int type, float locx_, float locy_)
 	y_ = locy_;
 #endif
 
-	HGE* hge = hgeCreate(HGE_VERSION);
-
-	switch( type )
-	{
-		case 2:
-			tex_ = hge->Texture_Load(SHIPTYPE2);
-			type_ = 2;
-			break;
-		case 3:
-			tex_ = hge->Texture_Load(SHIPTYPE3);
-			type_ = 3;
-			break;
-		case 4:
-			tex_ = hge->Texture_Load(SHIPTYPE4);
-			type_ = 4;
-			break;
-		default:
-			tex_ = hge->Texture_Load(SHIPTYPE1);
-			type_ = 1;
-			break;
-	}
-
-	hge->Release();
-	sprite_.reset(new hgeSprite(tex_, 0, 0, 64, 64));
-
 	font_.reset(new hgeFont("font1.fnt"));
 	font_->SetScale( 0.5 );
-	sprite_->SetHotSpot(32,32);
 }
 
 
@@ -84,9 +59,6 @@ Ship::Ship(int type, float locx_, float locy_)
 */
 Ship::~Ship()
 {
-	HGE* hge = hgeCreate(HGE_VERSION);
-	hge->Texture_Free(tex_);
-	hge->Release();
 }
 
 

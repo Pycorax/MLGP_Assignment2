@@ -36,7 +36,7 @@ void RoomButton::Update(int mousePosX, int mousePosY, bool leftClicked)
 
 	// Update the text
 	ostringstream oss;
-	oss << room->GetName() << " (" << room->GetTeamList(Room::TEAM_BLUE).size() << " - " << room->GetTeamList(Room::TEAM_ORANGE).size() << ")";
+	oss << room->GetName() << " (" << room->GetTeamList(Room::TEAM_BLUE).size() << " - " << room->GetTeamList(Room::TEAM_RED).size() << ")";
 	buttonText = oss.str();
 }
 

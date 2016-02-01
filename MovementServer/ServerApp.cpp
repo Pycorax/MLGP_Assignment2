@@ -346,7 +346,7 @@ void ServerApp::ConsoleLoop()
 			console->Print("\\List of Rooms: \n");
 			for (auto room : rooms_)
 			{
-				console->Print("\\#" + to_string(room.GetID()) + " -> " + room.GetName() + "(" + to_string(room.GetConnectedIDs().size()) + ")\n");
+				console->Print("\\#" + to_string(room.GetID()) + " -> " + room.GetName() + "(" + to_string(room.GetTeamList(Room::TEAM_BLUE).size()) + " + " + to_string(room.GetTeamList(Room::TEAM_RED).size()) + " = " + to_string(room.GetConnectedIDs().size()) + ")\n");
 				hasRoom = true;
 			}
 
@@ -423,7 +423,6 @@ void ServerApp::SendWelcomePackage(SystemAddress& addr)
 		bs.Write( itr->second.id );
 		bs.Write( itr->second.x_ );
 		bs.Write( itr->second.y_ );
-		bs.Write( itr->second.type_ );
 	}
 
 	// Send Goals
@@ -500,11 +499,9 @@ void ServerApp::ProcessInitialPosition( SystemAddress& addr, string name_, float
 	itr->second.name = name_;
 	itr->second.x_ = x_;
 	itr->second.y_ = y_;
-	itr->second.type_ = type_;
 	
 	console->Print("Player " + itr->second.name + " connected." + "\n");
 	console->Print("Received pos" + to_string(itr->second.x_) + " " + to_string(itr->second.y_) + "\n");
-	console->Print("Received type" + to_string(itr->second.type_) + "\n");
 
 	msgid = ID_NEWSHIP;
 	bs.Write(msgid);
@@ -512,7 +509,6 @@ void ServerApp::ProcessInitialPosition( SystemAddress& addr, string name_, float
 	bs.Write(itr->second.name.c_str());
 	bs.Write(itr->second.x_);
 	bs.Write(itr->second.y_);
-	bs.Write(itr->second.type_);
 
 	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, addr, true);
 

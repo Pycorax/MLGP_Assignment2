@@ -23,7 +23,7 @@ class RakPeerInterface;
 struct GameObject 
 {
 	GameObject(unsigned int newid)
-	: x_(0), y_(0), type_(1)
+	: x_(0), y_(0)
 	{
 		id = newid;
 	}
@@ -32,7 +32,6 @@ struct GameObject
 	unsigned int id;
 	float x_;
 	float y_;
-	int type_;
 };
 
 class ServerApp

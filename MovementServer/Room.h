@@ -15,7 +15,7 @@ public:
 	enum TEAM_TYPE
 	{
 		TEAM_BLUE,
-		TEAM_ORANGE,
+		TEAM_RED,
 		TOTAL_TEAMS
 	};
 
@@ -54,11 +54,11 @@ public:
 			if (team == TOTAL_TEAMS)	// No?
 			{
 				// Determine the team to throw the player ourselves
-				if (teamList[TEAM_BLUE].size() > teamList[TEAM_ORANGE].size())
+				if (teamList[TEAM_BLUE].size() > teamList[TEAM_RED].size())
 				{
-					teamList[TEAM_ORANGE].push_back(userID);
+					teamList[TEAM_RED].push_back(userID);
 				}
-				else if (teamList[TEAM_BLUE].size() < teamList[TEAM_ORANGE].size())
+				else if (teamList[TEAM_BLUE].size() < teamList[TEAM_RED].size())
 				{
 					teamList[TEAM_BLUE].push_back(userID);
 				}
@@ -68,7 +68,7 @@ public:
 					srand(time_t(NULL));
 					if (rand() % 2)
 					{
-						teamList[TEAM_ORANGE].push_back(userID);
+						teamList[TEAM_RED].push_back(userID);
 					}
 					else
 					{

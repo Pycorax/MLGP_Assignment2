@@ -43,6 +43,8 @@ class Application
 		TT_BOOM,
 		TT_BUTTON,
 		TT_GOAL,
+		TT_SHIP_BLUE,
+		TT_SHIP_RED,
 		TT_TOTAL
 	};
 
@@ -52,6 +54,8 @@ class Application
 		ST_BOOM,
 		ST_BUTTON,
 		ST_GOAL,
+		ST_SHIP_BLUE,
+		ST_SHIP_RED,
 		ST_TOTAL
 	};
 
@@ -140,6 +144,9 @@ class Application
 	void lobbyRender();
 	bool newRoomRender();
 	void gameRender();
+
+	// Ships
+	Ship* findShip(int id);
 
 	// Rooms
 	void createRoomButton(Room* rm);
