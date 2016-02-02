@@ -996,6 +996,12 @@ bool Application::gameUpdate()
 		goal->Update(timedelta);
 	}
 
+	// Kill/Kick the player
+	if (ships_.at(0)->GetHealth() <= 0 && !leavingRoom)
+	{
+		leaveRoom();
+	}
+
 	// Handle the Packets that are received
 	HandlePackets(rakpeer_->Receive());
 

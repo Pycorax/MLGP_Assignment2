@@ -166,7 +166,7 @@ class Application
 	// Rooms
 	void createRoomButton(Room* rm);
 	void joinRoom(int roomID);
-	void leaveRoom(void);
+	void leaveRoom();
 	Room* findRoom(int roomID);
 	Room * findRoomUserIsIn(int userID);
 
