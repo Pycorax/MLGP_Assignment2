@@ -146,10 +146,11 @@ ServerApp::ServerApp(float packetHandlerDelay, float consoleDelay, float gameDel
 	: rakpeer_(RakNetworkFactory::GetRakPeerInterface())
 	, newID(0)
 	, console(Console::Instance())
+	, maxConnections(10)
 {
 	// Set up RakNet
 	rakpeer_->Startup(100, 30, &SocketDescriptor(1691, 0), 1);
-	rakpeer_->SetMaximumIncomingConnections(MAX_CONNECTIONS);
+	rakpeer_->SetMaximumIncomingConnections(maxConnections);
 	rakpeer_->SetOccasionalPing(true);
 
 	// Set the delay for the threads
@@ -203,7 +204,7 @@ void ServerApp::PacketHandlerLoop()
 		switch (msgid)
 		{
 		case ID_NEW_INCOMING_CONNECTION:
-			if (clients_.size() < MAX_CONNECTIONS)
+			if (clients_.size() < maxConnections)
 			{
 				SendWelcomePackage(packet->systemAddress);
 			}
@@ -438,7 +439,7 @@ void ServerApp::ConsoleLoop()
 		{
 			if (cmd.params.size() > 0)
 			{
-				int maxConnections = stoi(cmd.params.at(0));
+				maxConnections = stoi(cmd.params.at(0));
 				rakpeer_->SetMaximumIncomingConnections(maxConnections);
 				console->Print("\\Max Connections set to: " + to_string(maxConnections) + "\n");
 			}
@@ -449,6 +450,11 @@ void ServerApp::ConsoleLoop()
 		}
 		break;
 
+		case ConsoleCommand::C_GET_CONNECTIONS:
+		{
+			console->Print("\\Max Connections: " + to_string(maxConnections) + "\n");
+		}
+		break;
 	}
 }
 

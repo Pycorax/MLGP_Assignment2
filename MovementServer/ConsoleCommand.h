@@ -17,6 +17,7 @@ public: // Types and Variables
 		C_DEBUG_PRINT_GOALS,
 		C_CREATE_ROOM,
 		C_SET_CONNECTIONS,
+		C_GET_CONNECTIONS,
 		C_TOTAL
 	};
 

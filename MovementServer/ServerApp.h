@@ -53,7 +53,7 @@ private:
 	float loopDelay[THREAD_TOTAL];
 
 	// User Handling
-	static const int MAX_CONNECTIONS = 10;
+	int maxConnections;
 	unsigned int newID;
 
 	// RakNet
