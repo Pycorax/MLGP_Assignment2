@@ -96,6 +96,7 @@ class Application
 	unsigned int timer_;
 	const int TICK_RATE = 24;
 	const int NETWORK_UPDATE_DELTA = 1000 / TICK_RATE;
+	bool connecting;
 
 	/*
 	 * Lobby Render Positioning

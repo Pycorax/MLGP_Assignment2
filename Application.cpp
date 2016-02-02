@@ -35,6 +35,7 @@ Application::Application()
 	: hge_(hgeCreate(HGE_VERSION))
 	, appstate(AS_JOIN)
 	, rakpeer_(RakNetworkFactory::GetRakPeerInterface())
+	, connecting(false)
 	, timer_(0)
 	// Lab 13 Task 2 : add new initializations
 	, mymissile(nullptr)
@@ -371,6 +372,7 @@ int Application::HandlePackets(Packet * packet)
 			if (appstate == AS_JOIN)
 			{
 				notifyMessage = "Server is FULL!";
+				connecting = false;
 			}
 
 			break;
@@ -770,7 +772,6 @@ int Application::HandlePackets(Packet * packet)
 
 bool Application::joinUpdate()
 {
-	static bool connecting = false;
 	static string shipNameSaved = "";
 
 	if (!consoleOpen && !connecting && updateInputBuffer(Ship::MAX_NAME_LENGTH))
@@ -804,11 +805,6 @@ bool Application::joinUpdate()
 		case ID_WELCOME:
 			// Go to the next state
 			changeState(AS_LOBBY);
-			break;
-		case ID_SERVER_FULL:
-			// Inform the user of the issue
-			notifyMessage = "Server is FULL!";
-			connecting = false;
 			break;
 		case ID_DISCONNECTION_NOTIFICATION:
 			connecting = false;
