@@ -165,6 +165,7 @@ public:
 	bool IsAlive(void) { return health_ > MIN_HEALTH; }
 	int GetHealth(void) { return health_; }
 	void Injure(int damage);
+	void Heal(int health);
 	void ResetHealth(void);
 #endif
 

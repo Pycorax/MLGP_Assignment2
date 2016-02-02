@@ -76,6 +76,8 @@ class Application
 		IBT_TOTAL
 	};
 
+	static const float HEAL_RATE;
+
 	/*
 	 * Application
 	 */

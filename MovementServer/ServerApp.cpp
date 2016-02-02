@@ -350,6 +350,7 @@ void ServerApp::PacketHandlerLoop()
 
 		case ID_COLLIDE:
 		case ID_INJURED:
+		case ID_HEAL:
 			{
 				bs.ResetReadPointer();
 				rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE, 0, packet->systemAddress, true);

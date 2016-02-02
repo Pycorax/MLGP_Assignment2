@@ -275,6 +275,22 @@ void Ship::Injure(int damage)
 	boomShowTimer = BOOM_SHOW_TIME;
 }
 
+void Ship::Heal(int health)
+{
+	if (health <= 0)
+	{
+		// Don't allow health to decrease a ship's health
+		return;
+	}
+
+	health_ += health;
+
+	if (health_ >= MAX_HEALTH)
+	{
+		health_ = MAX_HEALTH;
+	}
+}
+
 void Ship::ResetHealth(void)
 {
 	health_ = MAX_HEALTH;
@@ -373,6 +389,12 @@ void Ship::RecvObject(RakNet::BitStream * bs, MyMsgIDs type)
 		{
 			bs->Read(health_);
 			bs->Read(boomShowTimer);
+		}
+		break;
+
+		case ID_HEAL:
+		{
+			bs->Read(health_);
 		}
 		break;
 	}

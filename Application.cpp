@@ -25,6 +25,8 @@ float GetAbsoluteMag( float num )
 	return num;
 }
 
+const float Application::HEAL_RATE = 1000.0f;
+
 /** 
 * Constuctor
 *
@@ -682,7 +684,6 @@ int Application::HandlePackets(Packet * packet)
 		case ID_INJURED:
 			{
 				unsigned int shipid;
-				float x, y;
 				bs.Read(shipid);
 
 				if (shipid == ships_.at(0)->GetID())
@@ -694,6 +695,21 @@ int Application::HandlePackets(Packet * packet)
 			}
 			break;
 
+		case ID_HEAL:
+			{
+				int shipid;
+				bs.Read(shipid);
+
+				for (auto& ship : ships_)
+				{
+					if (ship->GetID() == shipid)
+					{
+						ship->RecvObject(&bs, ID_HEAL);
+						break;
+					}
+				}
+			}
+			break;
 		case ID_NEWMISSILE:
 		{
 			float x, y, w;
@@ -1001,6 +1017,26 @@ bool Application::gameUpdate()
 	for (auto goal : goalList)
 	{
 		goal->Update(timedelta);
+	
+		// Health Regen
+		Ship* ship = ships_.at(0);
+		if (
+			ship->GetX() > goal->GetPosX() && ship->GetX() < goal->GetPosX() + goal->GetScaleX()
+			&&
+			ship->GetY() > goal->GetPosY() && ship->GetY() < goal->GetPosY() + goal->GetScaleY()
+			)
+		{
+			ship->Heal(HEAL_RATE * timedelta);
+
+			// Inform everyone that your health has increased
+			RakNet::BitStream bs;
+
+			bs.Write(static_cast<unsigned char>(ID_HEAL));
+			bs.Write(ship->GetID());
+			bs.Write(ship->GetHealth());
+
+			rakpeer_->Send(&bs, HIGH_PRIORITY, UNRELIABLE_SEQUENCED, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
+		}
 	}
 
 	// Kill/Kick the player
