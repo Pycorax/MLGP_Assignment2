@@ -64,6 +64,10 @@ private:
 	Room lobby;						// Stores references to clients in the lobby
 	vector<Room> rooms_;			// Stores references to clients in a room
 
+	// Room Clearing
+	static const double CLEAR_ROOM_TIME;
+	double clearRoomTime;
+
 	// Goals. The same goals will be used for all rooms.
 	Goal leftGoal;
 	Goal rightGoal;

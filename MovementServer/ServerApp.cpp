@@ -17,6 +17,8 @@
 // Using Directives
 using std::to_string;
 
+const double ServerApp::CLEAR_ROOM_TIME = 10.0;
+
 void ServerApp::NotifyServerFull(SystemAddress & addr)
 {
 	RakNet::BitStream bs;
@@ -147,6 +149,7 @@ ServerApp::ServerApp(float packetHandlerDelay, float consoleDelay, float gameDel
 	, newID(0)
 	, console(Console::Instance())
 	, maxConnections(10)
+	, clearRoomTime(0.0)
 {
 	// Set up RakNet
 	rakpeer_->Startup(100, 30, &SocketDescriptor(1691, 0), 1);
@@ -481,6 +484,24 @@ void ServerApp::GameLoop()
 		// Reset timer
 		timeSinceLastUpdate = 0.0f;
 	}
+
+	// If there is no one on the server after 10 seconds, clear the rooms
+	if (clients_.size() == 0 && rooms_.size() > 0)
+	{
+		clearRoomTime += dt;
+
+		if (clearRoomTime > CLEAR_ROOM_TIME)
+		{
+			// Remove all rooms
+			rooms_.clear();
+			console->Print("No clients are connected for over " + to_string(CLEAR_ROOM_TIME) + " seconds. Clearing rooms!\n");
+		}
+	}
+	else
+	{
+		clearRoomTime = 0.0;
+	}
+
 
 	Sleep(loopDelay[THREAD_GAME]);
 }
