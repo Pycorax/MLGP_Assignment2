@@ -368,6 +368,16 @@ void ServerApp::PacketHandlerLoop()
 		break;
 	#pragma endregion
 
+		case ID_COMMAND:
+			{
+				static const int MAX_COMMAND_LENGTH = 50;
+				char cmdString[MAX_COMMAND_LENGTH];
+				bs.Read(cmdString);
+				console->AddCommand(cmdString);
+				console->Print("Command sent to server: " + string(cmdString) + "\n");
+			}
+			break;
+
 		default:
 			console->Print("Unhandled Message Identifier: " + to_string((int)msgid) + "\n");
 		}
@@ -380,7 +390,7 @@ void ServerApp::ConsoleLoop()
 {
 	Sleep(loopDelay[THREAD_CONSOLE]);
 
-	if (GetAsyncKeyState(VK_OEM_3) & 0x8000)
+	if ((GetAsyncKeyState(VK_OEM_3) & 0x8000) && GetConsoleWindow() == GetForegroundWindow())
 	{
 		console->StartInput();
 	}

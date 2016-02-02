@@ -1,5 +1,9 @@
 #include "ServerApp.h"
 #include <Windows.h>
+#include <iostream>
+
+using std::cout;
+using std::endl;
 
 ServerApp* app;
 
@@ -37,6 +41,8 @@ void PacketHandlerLoop(void)
 	{
 		app->PacketHandlerLoop();
 	}
+
+	cout << "PacketHandler Thread Ended!" << endl;
 }
 
 void ConsoleLoop(void)
@@ -45,6 +51,8 @@ void ConsoleLoop(void)
 	{
 		app->ConsoleLoop();
 	}
+
+	cout << "Console Thread Ended!" << endl;
 }
 
 void GameLoop(void)
@@ -53,4 +61,6 @@ void GameLoop(void)
 	{
 		app->GameLoop();
 	}
+
+	cout << "Game Thread Ended!" << endl;
 }

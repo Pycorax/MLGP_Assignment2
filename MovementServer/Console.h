@@ -31,6 +31,9 @@ private:
 
 	// Queue of Messages to Print
 	queue<string> m_printQueue;
+
+	// Queue of Commands to Execute
+	queue<ConsoleCommand> m_commandQueue;
 	
 public:
 	static Console* Instance();
@@ -44,6 +47,9 @@ public:
 	void StartInput(void);
 	void StopInput(void);
 	bool GetInputMode(void);
+
+	// Command Queue
+	void AddCommand(string command);
 
 private:
 	Console();

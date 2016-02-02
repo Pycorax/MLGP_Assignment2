@@ -23,7 +23,9 @@ enum MyMsgIDs
 	ID_NEWMISSILE,
 	ID_UPDATEMISSILE,
 	// Ball
-	ID_UPDATEGOAL
+	ID_UPDATEGOAL,
+	// Console
+	ID_COMMAND,
 };
 
 #endif

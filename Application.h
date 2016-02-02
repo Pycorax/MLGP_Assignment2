@@ -8,6 +8,7 @@
 #include "RoomButton.h"
 #include "MovementServer\Room.h"
 #include "ClientGoal.h"
+#include "GUIConsole.h"
 
 class HGE;
 class hgeFont;
@@ -45,6 +46,7 @@ class Application
 		TT_GOAL,
 		TT_SHIP_BLUE,
 		TT_SHIP_RED,
+		TT_CONSOLE_BG,
 		TT_TOTAL
 	};
 
@@ -56,6 +58,7 @@ class Application
 		ST_GOAL,
 		ST_SHIP_BLUE,
 		ST_SHIP_RED,
+		ST_CONSOLE_BG,
 		ST_TOTAL
 	};
 
@@ -64,6 +67,13 @@ class Application
 		BT_NEWROOM,
 		BT_QUIT,
 		BT_TOTAL
+	};
+
+	enum INPUT_BUFFER_TYPE
+	{
+		IBT_NORMAL,
+		IBT_CONSOLE,
+		IBT_TOTAL
 	};
 
 	/*
@@ -75,6 +85,10 @@ class Application
 	hgeSprite* sprites_[ST_TOTAL];
 	APP_STATE appstate;
 	
+	// Console
+	GUIConsole console;
+	bool consoleOpen;
+
 	/*
 	 * Network
 	 */
@@ -93,7 +107,7 @@ class Application
 	/*
 	 * Input
 	 */
-	string inputBuffer;
+	string inputBuffer[IBT_TOTAL];
 	string notifyMessage;		// This string is used to display notifications to the user on any scene.
 
 
@@ -157,7 +171,7 @@ class Application
 	Room * findRoomUserIsIn(int userID);
 
 	// Others
-	bool updateInputBuffer(int maxBufferLength);
+	bool updateInputBuffer(int maxBufferLength, INPUT_BUFFER_TYPE type = IBT_NORMAL);
 	bool checkCollisions(Ship* ship, ShipList shipsToCheckWith);
 	bool SendInitialPosition();
 

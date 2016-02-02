@@ -42,6 +42,7 @@ Application::Application()
 	, joiningRoom(false)
 	, leavingRoom(false)
 	, currentRoom(nullptr)
+	, consoleOpen(false)
 {
 }
 
@@ -93,6 +94,7 @@ bool Application::Init()
 		textures_[TT_GOAL] = hge_->Texture_Load("goal.png");
 		textures_[TT_SHIP_BLUE] = hge_->Texture_Load("ship_blue.png");
 		textures_[TT_SHIP_RED] = hge_->Texture_Load("ship_red.png");
+		textures_[TT_CONSOLE_BG] = hge_->Texture_Load("consoleBG.png");
 
 		// Load Sprites
 		sprites_[ST_BG] = new hgeSprite(textures_[TT_BG], 0, 0, screenwidth, screenheight);
@@ -107,6 +109,8 @@ bool Application::Init()
 		sprites_[ST_SHIP_BLUE]->SetHotSpot(32, 32);
 		sprites_[ST_SHIP_RED] = new hgeSprite(textures_[TT_SHIP_RED], 0, 0, 64, 64);
 		sprites_[ST_SHIP_RED]->SetHotSpot(32, 32);
+		sprites_[ST_CONSOLE_BG] = new hgeSprite(textures_[TT_CONSOLE_BG], 0, 0, 20, 20);
+		sprites_[ST_CONSOLE_BG]->SetHotSpot(10, 10);
 
 		// Load Fonts
 		font_ = new hgeFont("font1.fnt");
@@ -118,6 +122,9 @@ bool Application::Init()
 
 		// Define the start Y position that the room header should be printed from
 		roomHeaderYPos = screenheight * 0.2f;
+
+		// Initialize the Console
+		console.Init(10, screenwidth, sprites_[ST_CONSOLE_BG], font_);
 
 		// Attempt to start up RakNet
 		if (rakpeer_->Startup(1,30,&SocketDescriptor(), 1))
@@ -146,6 +153,39 @@ bool Application::Init()
 */
 bool Application::Update()
 {
+	// Console Open/Close
+	static const double TOGGLE_TIME_DELAY = 0.1;
+	static double toggleTimer = 0.0;
+	toggleTimer += hge_->Timer_GetDelta();
+	if (hge_->Input_GetKeyState(HGEK_GRAVE) && toggleTimer > TOGGLE_TIME_DELAY)
+	{
+		// Toggle Console
+		consoleOpen = !consoleOpen;
+
+		// Reset toggle timer
+		toggleTimer = 0.0;
+	}
+
+	// Console Update
+	if (consoleOpen)
+	{
+		bool enter = updateInputBuffer(GUIConsole::MAX_COMMAND_LENGTH, IBT_CONSOLE);
+		console.Update(enter, inputBuffer[IBT_CONSOLE]);
+
+		if (enter)
+		{
+			inputBuffer[IBT_CONSOLE] = "";
+
+			// Send command to server
+			RakNet::BitStream bs;
+			bs.Write(static_cast<unsigned char>(MyMsgIDs::ID_COMMAND));
+			bs.Write(console.GetLastMessage().c_str());
+			rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
+
+			std::cout << "Send command: " << console.GetLastMessage().c_str() << " to the server!" << std::endl;
+		}
+	}
+
 	switch (appstate)
 	{
 		case AS_JOIN:
@@ -170,6 +210,8 @@ void Application::Render()
 	hge_->Gfx_BeginScene();
 	hge_->Gfx_Clear(0);
 
+	float screenheight = static_cast<float>(hge_->System_GetState(HGE_SCREENHEIGHT));
+
 	switch (appstate)
 	{
 		case AS_JOIN:
@@ -184,6 +226,11 @@ void Application::Render()
 		case AS_GAME:
 			gameRender();
 			break;
+	}
+
+	if (consoleOpen)
+	{
+		console.Render(0, screenheight);
 	}
 
 	hge_->Gfx_EndScene();
@@ -265,7 +312,7 @@ bool Application::ControlUpdate(double dt)
 	}
 
 	// Lab 13 Task 4 : Add a key to shoot missiles
-	if (hge_->Input_GetKeyState(HGEK_ENTER))
+	if (hge_->Input_GetKeyState(HGEK_SPACE))
 	{
 		if (!keydown_enter)
 		{
@@ -290,7 +337,7 @@ void Application::changeState(APP_STATE state)
 	notifyMessage = "";
 
 	// Reset the input buffer
-	inputBuffer = "";
+	inputBuffer[IBT_NORMAL] = "";
 }
 
 int Application::HandlePackets(Packet * packet)
@@ -726,16 +773,16 @@ bool Application::joinUpdate()
 	static bool connecting = false;
 	static string shipNameSaved = "";
 
-	if (!connecting && updateInputBuffer(Ship::MAX_NAME_LENGTH))
+	if (!consoleOpen && !connecting && updateInputBuffer(Ship::MAX_NAME_LENGTH))
 	{
 		// Only continue if there is a name specified
-		if (inputBuffer.length() > 0)
+		if (inputBuffer[IBT_NORMAL].length() > 0)
 		{
 			// Save the ship name
-			shipNameSaved = inputBuffer;
+			shipNameSaved = inputBuffer[IBT_NORMAL];
 
 			// Reset the input buffer
-			inputBuffer = "";
+			inputBuffer[IBT_NORMAL] = "";
 
 			// Connect to the server
 			if (!connecting && rakpeer_->Connect("127.0.0.1", 1691, 0, 0))
@@ -827,7 +874,7 @@ bool Application::lobbyUpdate()
 bool Application::newRoomUpdate()
 {
 	// Once the user has finished typing,
-	if (updateInputBuffer(Room::MAX_ROOM_NAME_LENGTH))
+	if (!consoleOpen && updateInputBuffer(Room::MAX_ROOM_NAME_LENGTH))
 	{
 		// Tell the server to create this room
 		// -- Create BitStream object
@@ -837,7 +884,7 @@ bool Application::newRoomUpdate()
 		bs.Write(static_cast<unsigned char>(ID_NEWROOM));
 
 		// Ship Update
-		bs.Write(inputBuffer.c_str());
+		bs.Write(inputBuffer[IBT_NORMAL].c_str());
 
 		// Send this message
 		rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
@@ -997,7 +1044,7 @@ void Application::joinRender()
 
 	// Show the user Input
 	font_->SetScale(1.5f);
-	font_->printf(screenwidth * 0.5f, screenheight * 0.2f, HGETEXT_CENTER, "%s", inputBuffer.c_str());
+	font_->printf(screenwidth * 0.5f, screenheight * 0.2f, HGETEXT_CENTER, "%s", inputBuffer[IBT_NORMAL].c_str());
 
 	// Render error messages
 	if (notifyMessage.length() > 0)
@@ -1079,7 +1126,7 @@ bool Application::newRoomRender()
 
 	// Show the user Input
 	font_->SetScale(1.5f);
-	font_->printf(screenwidth * 0.5f, screenheight * 0.2f, HGETEXT_CENTER, "%s", inputBuffer.c_str());
+	font_->printf(screenwidth * 0.5f, screenheight * 0.2f, HGETEXT_CENTER, "%s", inputBuffer[IBT_NORMAL].c_str());
 
 	return false;
 }
@@ -1264,30 +1311,31 @@ bool Application::SendInitialPosition()
 	return true;
 }
 
-bool Application::updateInputBuffer(int maxBufferLength)
+bool Application::updateInputBuffer(int maxBufferLength, INPUT_BUFFER_TYPE type)
 {
-	static const double BACKSPACE_DELAY = 0.1f;
+	static const double KEY_DELAY = 0.1f;
 	static double timePassed = 0.0f;
 
 	// Update the timer
 	timePassed += hge_->Timer_GetDelta();
 
-	if (hge_->Input_GetKeyState(HGEK_ENTER))
+	if (hge_->Input_GetKeyState(HGEK_ENTER) && inputBuffer[type].size() > 0 && timePassed > KEY_DELAY)
 	{
+		timePassed = 0.0f;
 		return true;
 	}
-	else if (hge_->Input_GetKeyState(HGEK_BACKSPACE) && timePassed > BACKSPACE_DELAY)
+	else if (hge_->Input_GetKeyState(HGEK_BACKSPACE) && timePassed > KEY_DELAY)
 	{
-		inputBuffer = inputBuffer.substr(0, inputBuffer.length() - 1);
+		inputBuffer[type] = inputBuffer[type].substr(0, inputBuffer[type].length() - 1);
 		timePassed = 0.0f;
 	}
 	else
 	{
 		char input = hge_->Input_GetKey();
 
-		if (input >= ' ' && input <= '~' && inputBuffer.length() < maxBufferLength)
+		if (input >= ' ' && input <= '~' && inputBuffer[type].length() < maxBufferLength)
 		{
-			inputBuffer += input;
+			inputBuffer[type] += input;
 		}
 	}
 

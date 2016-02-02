@@ -26,6 +26,12 @@ ConsoleCommand ConsoleCommand::GetCommandFromString(string message)
 		return result;
 	}
 
+	// To Lowercase for comparison
+	for (auto& msg : message) 
+	{
+		msg = tolower(msg);
+	}
+
 	/*
 	* Obtaining the Command
 	*/

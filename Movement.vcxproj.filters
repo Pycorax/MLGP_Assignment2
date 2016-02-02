@@ -35,6 +35,9 @@
     <ClCompile Include="ClientGoal.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GUIConsole.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h">
@@ -65,6 +68,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ClientGoal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GUIConsole.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

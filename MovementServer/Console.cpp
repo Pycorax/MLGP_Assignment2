@@ -95,6 +95,14 @@ ConsoleCommand Console::Update(void)
 		m_printQueue.pop();
 	}
 
+	// Process commands in the queue, sent in externally
+	if (m_commandQueue.size() > 0)
+	{
+		ConsoleCommand cmd = m_commandQueue.back();
+		m_commandQueue.pop();
+		return cmd;
+	}
+
 	return ConsoleCommand();		// Return an empty one
 }
 
@@ -132,4 +140,14 @@ bool Console::GetInputMode(void)
 	inputMode = m_inputMode;
 	LeaveCriticalSection(&m_inputCSection);
 	return inputMode;
+}
+
+void Console::AddCommand(string command)
+{
+	ConsoleCommand cmd = ConsoleCommand::GetCommandFromString(command);
+
+	if (cmd.command != ConsoleCommand::C_TOTAL)
+	{
+		m_commandQueue.push(cmd);
+	}
 }
