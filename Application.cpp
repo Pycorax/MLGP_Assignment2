@@ -39,7 +39,6 @@ Application::Application()
 	, timer_(0)
 	// Lab 13 Task 2 : add new initializations
 	, mymissile(nullptr)
-	, keydown_enter(false)
 	, joiningRoom(false)
 	, leavingRoom(false)
 	, currentRoom(nullptr)
@@ -313,19 +312,13 @@ bool Application::ControlUpdate(double dt)
 	}
 
 	// Lab 13 Task 4 : Add a key to shoot missiles
-	if (hge_->Input_GetKeyState(HGEK_SPACE))
+	static const double SHOT_DELAY = 0.5;
+	static double shotTimer = 0.0;
+	shotTimer += hge_->Timer_GetDelta();
+	if (hge_->Input_GetKeyState(HGEK_SPACE) && shotTimer > SHOT_DELAY)
 	{
-		if (!keydown_enter)
-		{
-			CreateMissile(ships_.at(0)->GetX(), ships_.at(0)->GetY(), ships_.at(0)->GetW(), ships_.at(0)->GetID());
-		}
-	}
-	else
-	{
-		if (keydown_enter)
-		{
-			keydown_enter = false;
-		}
+		CreateMissile(ships_.at(0)->GetX(), ships_.at(0)->GetY(), ships_.at(0)->GetW(), ships_.at(0)->GetID());
+		shotTimer = 0.0;
 	}	
 
 	return false;
@@ -1462,6 +1455,8 @@ void Application::CreateMissile(float x, float y, float w, int id)
 		// Delete existing missile
 		delete mymissile;
 		mymissile = nullptr;
+
+		std::cout << "Deleted existing missile." << std::endl;
 	}
 
 	// Add a new missile based on the following parameter coordinates
@@ -1475,4 +1470,6 @@ void Application::CreateMissile(float x, float y, float w, int id)
 	bs.Write(y);
 	bs.Write(w);
 	rakpeer_->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
+
+	std::cout << "Created new missile." << std::endl;
 }

@@ -123,7 +123,6 @@ class Application
 	// Missiles
 	Missile* mymissile;
 	bool have_missile;
-	bool keydown_enter;
 	typedef std::vector<Missile*> MissileList;
 	MissileList missiles_;
 
