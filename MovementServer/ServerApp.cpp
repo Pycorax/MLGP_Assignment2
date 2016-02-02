@@ -433,6 +433,22 @@ void ServerApp::ConsoleLoop()
 			createRoom(roomName);
 		}
 		break;
+
+		case ConsoleCommand::C_SET_CONNECTIONS:
+		{
+			if (cmd.params.size() > 0)
+			{
+				int maxConnections = stoi(cmd.params.at(0));
+				rakpeer_->SetMaximumIncomingConnections(maxConnections);
+				console->Print("\\Max Connections set to: " + to_string(maxConnections) + "\n");
+			}
+			else
+			{
+				console->Print("\\Attempt to set Max Connections. Error: No number specified. \n");
+			}
+		}
+		break;
+
 	}
 }
 

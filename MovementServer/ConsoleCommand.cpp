@@ -4,7 +4,8 @@ const string ConsoleCommand::COMMAND_LIST[C_TOTAL] =
 {
 	"printrooms",
 	"printgoals",
-	"newroom"
+	"newroom",
+	"connections"
 };
 
 ConsoleCommand::ConsoleCommand()
