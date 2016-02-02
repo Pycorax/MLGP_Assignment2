@@ -541,6 +541,13 @@ int Application::HandlePackets(Packet * packet)
 						ship->SetSprite(sprites_[ST_SHIP_RED]);
 					}
 				}
+
+				// Reset the health of the guy who joined, be it u or me
+				Ship* joiner = findShip(userID);
+				if (joiner)
+				{
+					joiner->ResetHealth();
+				}
 			}
 		}
 		break;

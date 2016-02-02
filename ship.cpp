@@ -275,6 +275,11 @@ void Ship::Injure(int damage)
 	boomShowTimer = BOOM_SHOW_TIME;
 }
 
+void Ship::ResetHealth(void)
+{
+	health_ = MAX_HEALTH;
+}
+
 void Ship::SendObject(RakPeerInterface * peer, MyMsgIDs type) const
 {
 	RakNet::BitStream bs;
